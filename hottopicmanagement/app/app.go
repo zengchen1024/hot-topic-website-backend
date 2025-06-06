@@ -31,7 +31,10 @@ type appService struct {
 }
 
 func (s *appService) ToReview(cmd CmdToUploadOptionalTopics) error {
-	file := newfileToReview(s.filePath)
+	file, err := newfileToReview(s.filePath)
+	if err != nil {
+		return fmt.Errorf("new excel failed, err:%s", err.Error())
+	}
 
 	newOnes, err := s.handleOldTopics(cmd, file)
 	if err != nil {

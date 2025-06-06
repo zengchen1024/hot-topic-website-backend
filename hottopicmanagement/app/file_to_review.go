@@ -12,8 +12,8 @@ import (
 const (
 	sheetNewTopics       = "new_topics"
 	sheetLastTopics      = "last_hot_topics"
-	sheetAppendToOld     = "append_to_last_none_hot_topics"
-	sheetRemoveFromOld   = "remove_from_last_none_hot_topics"
+	sheetAppendToOld     = "append_to_last_discarded"
+	sheetRemoveFromOld   = "remove_from_last_discarded"
 	sheetUnchangedTopics = "unchanged_topics"
 )
 
@@ -61,11 +61,30 @@ type fileToReview struct {
 	rowUnchangedTopic int
 }
 
-func newfileToReview(file string) *fileToReview {
-	return &fileToReview{
-		file:     excelize.NewFile(),
-		filePath: file,
+func newfileToReview(file string) (*fileToReview, error) {
+	all := []string{
+		sheetLastTopics, // last hot topic first
+		sheetNewTopics,
+		sheetAppendToOld,
+		sheetRemoveFromOld,
+		sheetUnchangedTopics,
 	}
+
+	f := excelize.NewFile()
+	for _, name := range all {
+		if _, err := f.NewSheet(name); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := f.DeleteSheet("Sheet1"); err != nil {
+		return nil, err
+	}
+
+	return &fileToReview{
+		file:     f,
+		filePath: file,
+	}, nil
 }
 
 func (ftr *fileToReview) saveToFile() error {
