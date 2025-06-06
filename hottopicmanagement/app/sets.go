@@ -49,6 +49,18 @@ func hasIntersection(a, b map[int]bool) bool {
 	return false
 }
 
+func getIntersection(a, b map[int]bool) map[int]bool {
+	r := map[int]bool{}
+
+	for k := range a {
+		if b[k] {
+			r[k] = true
+		}
+	}
+
+	return r
+}
+
 func findRelationsBetweenCategories(newSets, oldSets []map[int]bool) (newToOld, oldToNew map[int][]int) {
 	newToOld = make(map[int][]int)
 	oldToNew = make(map[int][]int)
@@ -59,6 +71,18 @@ func findRelationsBetweenCategories(newSets, oldSets []map[int]bool) (newToOld, 
 				newToOld[i] = append(newToOld[i], j)
 				oldToNew[j] = append(oldToNew[j], i)
 			}
+		}
+	}
+
+	for i := range newSets {
+		if _, ok := newToOld[i]; !ok {
+			newToOld[i] = nil
+		}
+	}
+
+	for j := range oldSets {
+		if _, ok := oldToNew[j]; !ok {
+			oldToNew[j] = nil
 		}
 	}
 

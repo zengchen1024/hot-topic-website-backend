@@ -23,6 +23,20 @@ type HotTopic struct {
 	Version           int
 }
 
+func NewHotTopic(title string, order int, sources []DiscussionSource, createdAt string) HotTopic {
+	return HotTopic{
+		Title:             title,
+		Order:             order,
+		DiscussionSources: sources,
+		StatusTransferLog: []StatusLog{
+			{
+				Time:   createdAt,
+				Status: "New",
+			},
+		},
+	}
+}
+
 func (ht *HotTopic) GetDSSet() map[int]bool {
 	v := make(map[int]bool, len(ht.DiscussionSources))
 
@@ -52,6 +66,13 @@ type NotHotTopic struct {
 	DiscussionSources []DiscussionSourceInfo
 }
 
+func NewNotHotTopic(title string, sources []DiscussionSourceInfo) NotHotTopic {
+	return NotHotTopic{
+		Title:             title,
+		DiscussionSources: sources,
+	}
+}
+
 func (nht *NotHotTopic) GetDSSet() map[int]bool {
 	v := make(map[int]bool, len(nht.DiscussionSources))
 
@@ -64,7 +85,7 @@ func (nht *NotHotTopic) GetDSSet() map[int]bool {
 
 func (nht *NotHotTopic) UpdateRemoved(dsIdsOfNewTopic map[int]bool) {
 	for i := range nht.DiscussionSources {
-		item := nht.DiscussionSources[i]
+		item := &nht.DiscussionSources[i]
 
 		if _, ok := dsIdsOfNewTopic[item.Id]; !ok {
 			item.removed = true
