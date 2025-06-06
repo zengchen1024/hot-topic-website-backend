@@ -14,7 +14,7 @@ type OptionalTopic struct {
 
 func (ot *OptionalTopic) updateAppended(dsIdsOfOldTopic map[int]bool) {
 	for i := range ot.DiscussionSources {
-		item := ot.DiscussionSources[i]
+		item := &ot.DiscussionSources[i]
 
 		if _, ok := dsIdsOfOldTopic[item.Id]; !ok {
 			item.appended = true
