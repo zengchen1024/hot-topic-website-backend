@@ -17,7 +17,18 @@ const (
 	sheetRemoveFromOld   = "上次未入选的话题且有讨论源移除"
 	sheetUnchangedTopics = "上次未入选的话题且未发生变化"
 	sheetMultiIntersects = "本次的话题与上次未入选的话题发生讨论源交叉"
+
+	columnA = "A"
+	columnB = "B"
+	columnC = "C"
+	columnD = "D"
+
+	rowStart = 3
 )
+
+func cellId(column string, row int) string {
+	return fmt.Sprintf("%s%d", column, row)
+}
 
 type fileToReview struct {
 	file     *excelize.File
@@ -45,11 +56,11 @@ func newfileToReview(file string) (*fileToReview, error) {
 		file:     excelize.NewFile(),
 		filePath: file,
 
-		rowNewTopic:        3, // must start with 3, the first line is used for note, second line is blank
-		rowAppendToOld:     3,
-		rowRemoveFromOld:   3,
-		rowUnchangedTopic:  3,
-		rowMultiIntersects: 3,
+		rowNewTopic:        rowStart, // must start with 3, the first line is used for note, second line is blank
+		rowAppendToOld:     rowStart,
+		rowRemoveFromOld:   rowStart,
+		rowUnchangedTopic:  rowStart,
+		rowMultiIntersects: rowStart,
 	}
 	err := r.doInit()
 
@@ -190,6 +201,68 @@ func (ftr *fileToReview) saveToFile() error {
 	return ftr.file.SaveAs(ftr.filePath)
 }
 
+func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, saveDS func(*int) (string, error)) (err error) {
+	f := ftr.file
+	row := *row1
+
+	setCell := func(cell, value string) error {
+		return f.SetCellValue(sheet, cellId(cell, row), value)
+	}
+
+	if err = setCell(columnA, "话题描述"); err != nil {
+		return
+	}
+	if err = setCell(columnB, topicTitle); err != nil {
+		return
+	}
+	row++
+
+	if err = setCell(columnA, "相关讨论源（title&url）"); err != nil {
+		return
+	}
+	row++
+
+	// save discussion sources
+	column, err := saveDS(&row)
+	if err != nil {
+		return
+	}
+
+	err = f.SetCellStyle(sheet, cellId(columnA, row), cellId(column, row), ftr.topicSpliterStyle)
+	if err != nil {
+		return
+	}
+	row++
+
+	*row1 = row
+
+	return
+}
+
+func (ftr *fileToReview) saveOneDS(title, url string, row int, sheet string, color bool, colorValue int) (err error) {
+	f := ftr.file
+
+	if err = f.SetCellValue(sheet, cellId(columnA, row), ""); err != nil {
+		return
+	}
+
+	bcell := cellId(columnB, row)
+	ccell := cellId(columnC, row)
+	if err = f.SetCellValue(sheet, bcell, title); err != nil {
+		return
+	}
+
+	if err = f.SetCellValue(sheet, ccell, url); err != nil {
+		return
+	}
+
+	if color {
+		err = f.SetCellStyle(sheet, bcell, ccell, colorValue)
+	}
+
+	return
+}
+
 func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map[int]*OptionalTopic) error {
 	if len(oldTopics) == 0 {
 		return nil
@@ -201,7 +274,7 @@ func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map
 		return err
 	}
 
-	row := 3
+	row := rowStart
 
 	for i := range oldTopics {
 		old := &oldTopics[i]
@@ -213,8 +286,6 @@ func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map
 
 		item.updateAppended(old.GetDSSet())
 
-		//fmt.Printf("save hot topic, row:%d, title: %s\n", row, item.Title)
-
 		if err := ftr.saveAppendedTopic(item, &row, sheetLastTopics); err != nil {
 			return err
 		}
@@ -223,107 +294,62 @@ func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map
 	return nil
 }
 
-func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, sheet string) (err error) {
-	f := ftr.file
-	row := *row1
+func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, sheet string) error {
+	setDS := func(row2 *int) (column string, err error) {
+		row := *row2
+		column = columnC
 
-	// 话题描述
-	if err = f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "话题描述"); err != nil {
-		return
-	}
-
-	if err = f.SetCellValue(sheet, fmt.Sprintf("B%d", row), topic.Title); err != nil {
-		return
-	}
-	row++
-
-	// 讨论源（title & url）
-	if err = f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "相关讨论源（title&url）"); err != nil {
-		return
-	}
-	row++
-
-	// 写入每个讨论项
-	items := topic.sort()
-	for _, item := range items {
-		if err = f.SetCellValue(sheet, fmt.Sprintf("A%d", row), ""); err != nil {
-			return
-		}
-
-		bcell := fmt.Sprintf("B%d", row)
-		ccell := fmt.Sprintf("C%d", row)
-		if err = f.SetCellValue(sheet, bcell, item.Title); err != nil {
-			return
-		}
-		if err = f.SetCellValue(sheet, ccell, item.URL); err != nil {
-			return
-		}
-
-		if item.appended {
-			fmt.Println("set appended style")
-			if err = f.SetCellStyle(sheet, bcell, ccell, ftr.appendedDiscussionSourceStyle); err != nil {
+		items := topic.sort()
+		for _, item := range items {
+			err = ftr.saveOneDS(item.Title, item.URL, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
+			if err != nil {
 				return
 			}
+
+			row++
 		}
 
-		row++
+		*row2 = row
+
+		return
 	}
 
-	// 空一行并设置浅黄色背景
-	err = f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("C%d", row), ftr.topicSpliterStyle)
-	row++
-
-	*row1 = row
-
-	return
+	return ftr.saveTopic(topic.Title, row1, sheet, setDS)
 }
 
 func (ftr *fileToReview) saveNewTopic(topic *OptionalTopic) error {
 	ftr.totalNewTopic++
 
-	return ftr.saveTopic(topic, &ftr.rowNewTopic, sheetNewTopics)
+	return ftr.saveTopicDirectly(topic, &ftr.rowNewTopic, sheetNewTopics)
 }
 
 func (ftr *fileToReview) saveUnchangedTopic(topic *OptionalTopic) error {
 	ftr.totalUnchangedTopic++
 
-	return ftr.saveTopic(topic, &ftr.rowUnchangedTopic, sheetUnchangedTopics)
+	return ftr.saveTopicDirectly(topic, &ftr.rowUnchangedTopic, sheetUnchangedTopics)
 }
 
-func (ftr *fileToReview) saveTopic(topic *OptionalTopic, row1 *int, sheet string) error {
-	f := ftr.file
-	row := *row1
+func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, sheet string) error {
+	setDS := func(row2 *int) (column string, err error) {
+		row := *row2
+		column = columnC
 
-	// 话题描述
-	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "话题描述")
-	f.SetCellValue(sheet, fmt.Sprintf("B%d", row), topic.Title)
-	row++
+		for i := range topic.DiscussionSources {
+			item := &topic.DiscussionSources[i]
 
-	// 讨论源（title & url）
-	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "相关讨论源（title&url）")
-	row++
+			if err = ftr.saveOneDS(item.Title, item.URL, row, sheet, false, 0); err != nil {
+				return
+			}
 
-	// 写入每个讨论项
-	for i := range topic.DiscussionSources {
-		item := &topic.DiscussionSources[i]
+			row++
+		}
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "")
+		*row2 = row
 
-		bcell := fmt.Sprintf("B%d", row)
-		ccell := fmt.Sprintf("C%d", row)
-		f.SetCellValue(sheet, bcell, item.Title)
-		f.SetCellValue(sheet, ccell, item.URL)
-
-		row++
+		return
 	}
 
-	// 空一行并设置浅黄色背景
-	f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("C%d", row), ftr.topicSpliterStyle)
-	row++
-
-	*row1 = row
-
-	return nil
+	return ftr.saveTopic(topic.Title, row1, sheet, setDS)
 }
 
 func (ftr *fileToReview) saveTopicThatAppendToOld(topic *OptionalTopic, dsIdsOfOldTopic map[int]bool) error {
@@ -337,101 +363,64 @@ func (ftr *fileToReview) saveTopicThatAppendToOld(topic *OptionalTopic, dsIdsOfO
 func (ftr *fileToReview) saveTopicThatRemoveFromOld(oldTopic *domain.NotHotTopic, dsIdsOfNewTopic map[int]bool) error {
 	ftr.totalRemoveFromOld++
 
-	f := ftr.file
-	row := ftr.rowRemoveFromOld
 	sheet := sheetRemoveFromOld
 
-	// 话题描述
-	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "话题描述")
-	f.SetCellValue(sheet, fmt.Sprintf("B%d", row), oldTopic.Title)
-	row++
+	setDS := func(row2 *int) (column string, err error) {
+		row := *row2
+		column = columnC
 
-	// 讨论源（title & url）
-	f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "相关讨论源（title&url）")
-	row++
+		oldTopic.UpdateRemoved(dsIdsOfNewTopic)
 
-	// 写入每个讨论项
-	oldTopic.UpdateRemoved(dsIdsOfNewTopic)
-	items := oldTopic.Sort()
-	for _, item := range items {
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "")
+		items := oldTopic.Sort()
+		for _, item := range items {
+			err = ftr.saveOneDS(item.Title, item.URL, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
+			if err != nil {
+				return
+			}
 
-		bcell := fmt.Sprintf("B%d", row)
-		ccell := fmt.Sprintf("C%d", row)
-		f.SetCellValue(sheet, bcell, item.Title)
-		f.SetCellValue(sheet, ccell, item.URL)
-
-		if item.Removed() {
-			f.SetCellStyle(sheet, bcell, ccell, ftr.removedDiscussionSourceStyle)
+			row++
 		}
 
-		row++
+		*row2 = row
+
+		return
 	}
 
-	// 空一行并设置浅黄色背景
-	f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("C%d", row), ftr.topicSpliterStyle)
-	row++
-
-	ftr.rowRemoveFromOld = row
-
-	return nil
+	return ftr.saveTopic(oldTopic.Title, &ftr.rowRemoveFromOld, sheet, setDS)
 }
 
 func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopic, oldIds []int, oldTopics []domain.NotHotTopic) error {
-	newSets := topic.getDSSet()
-
 	ftr.totalMultiIntersects++
 
-	f := ftr.file
-	row := ftr.rowMultiIntersects
-	sheet := sheetMultiIntersects
+	setDS := func(row2 *int) (column string, err error) {
+		column = columnC
 
-	// 话题描述
-	if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "话题描述"); err != nil {
-		return err
-	}
-	if err := f.SetCellValue(sheet, fmt.Sprintf("B%d", row), topic.Title); err != nil {
-		return err
-	}
-	row++
+		newSets := topic.getDSSet()
 
-	// 讨论源（title & url）
-	if err := f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "相关讨论源（title&url）"); err != nil {
-		return err
-	}
-	row++
-
-	//
-	for _, i := range oldIds {
-		if err := ftr.helper(topic, newSets, &oldTopics[i], &row); err != nil {
-			return err
+		for _, i := range oldIds {
+			if err = ftr.saveOld(topic, newSets, &oldTopics[i], row2); err != nil {
+				return
+			}
 		}
+
+		err = ftr.saveLast(topic, newSets, row2)
+
+		return
 	}
 
-	if err := ftr.handleLast(topic, newSets, &row); err != nil {
-		return err
-	}
-
-	// 空一行并设置浅黄色背景
-	if err := f.SetCellStyle(sheet, fmt.Sprintf("A%d", row), fmt.Sprintf("C%d", row), ftr.topicSpliterStyle); err != nil {
-		return err
-	}
-	row++
-
-	ftr.rowMultiIntersects = row
-
-	return nil
+	return ftr.saveTopic(topic.Title, &ftr.rowMultiIntersects, sheetMultiIntersects, setDS)
 }
 
-func (ftr *fileToReview) helper(topic *OptionalTopic, topicIds map[int]bool, oldTopic *domain.NotHotTopic, row1 *int) error {
+func (ftr *fileToReview) saveOld(topic *OptionalTopic, topicIds map[int]bool, oldTopic *domain.NotHotTopic, row1 *int) (err error) {
+	f := ftr.file
 	row := *row1
 	sheet := sheetMultiIntersects
-	f := ftr.file
+
+	if err = f.SetCellValue(sheet, cellId(columnD, row), oldTopic.Title); err != nil {
+		return
+	}
 
 	common := getIntersection(topicIds, oldTopic.GetDSSet())
-
-	f.SetCellValue(sheet, fmt.Sprintf("D%d", row), oldTopic.Title)
-
 	for i := range topic.DiscussionSources {
 		item := topic.DiscussionSources[i]
 
@@ -441,12 +430,11 @@ func (ftr *fileToReview) helper(topic *OptionalTopic, topicIds map[int]bool, old
 
 		delete(topicIds, item.Id)
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "")
+		err = ftr.saveOneDS(item.Title, item.URL, row, sheet, false, 0)
+		if err != nil {
+			return
+		}
 
-		bcell := fmt.Sprintf("B%d", row)
-		ccell := fmt.Sprintf("C%d", row)
-		f.SetCellValue(sheet, bcell, item.Title)
-		f.SetCellValue(sheet, ccell, item.URL)
 		row++
 	}
 
@@ -455,10 +443,9 @@ func (ftr *fileToReview) helper(topic *OptionalTopic, topicIds map[int]bool, old
 	return nil
 }
 
-func (ftr *fileToReview) handleLast(topic *OptionalTopic, topicIds map[int]bool, row1 *int) error {
+func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, row1 *int) (err error) {
 	row := *row1
 	sheet := sheetMultiIntersects
-	f := ftr.file
 
 	for i := range topic.DiscussionSources {
 		item := topic.DiscussionSources[i]
@@ -467,14 +454,10 @@ func (ftr *fileToReview) handleLast(topic *OptionalTopic, topicIds map[int]bool,
 			continue
 		}
 
-		f.SetCellValue(sheet, fmt.Sprintf("A%d", row), "")
-
-		bcell := fmt.Sprintf("B%d", row)
-		ccell := fmt.Sprintf("C%d", row)
-		f.SetCellValue(sheet, bcell, item.Title)
-		f.SetCellValue(sheet, ccell, item.URL)
-
-		f.SetCellStyle(sheet, bcell, ccell, ftr.appendedDiscussionSourceStyle)
+		err = ftr.saveOneDS(item.Title, item.URL, row, sheet, true, ftr.appendedDiscussionSourceStyle)
+		if err != nil {
+			return
+		}
 
 		row++
 	}

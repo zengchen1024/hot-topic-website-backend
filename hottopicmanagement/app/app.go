@@ -60,7 +60,7 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 		return nil, err
 	}
 	if len(oldTopics) == 0 {
-		return nil, fmt.Errorf("no old topics")
+		return nil, errors.New("no old topics")
 	}
 
 	oldTopicsMap := make(map[string]*domain.HotTopic, len(oldTopics))
@@ -77,7 +77,6 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 
 		old, ok := oldTopicsMap[item.Title]
 		if ok {
-			//fmt.Println(item.Title)
 			oldOnes[old.Order] = item
 		} else {
 			newOnes = append(newOnes, item)
@@ -88,7 +87,6 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 		return nil, fmt.Errorf("the count of old topics is not matched, expect :%d, actual:%d", n, len(oldOnes))
 	}
 
-	fmt.Printf("oldTopics = %d, oldOnes=%d\n", len(oldTopics), len(oldOnes))
 	if err := file.saveLastTopics(oldTopics, oldOnes); err != nil {
 		return nil, err
 	}
@@ -101,8 +99,6 @@ func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fil
 		return errors.New("no new topics")
 	}
 
-	fmt.Printf("newOnes : %d\n", len(newOnes))
-
 	oldTopics, err := s.repoNotHotTopic.FindAll()
 	if err != nil {
 		return err
@@ -112,8 +108,6 @@ func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fil
 
 		return nil
 	}
-
-	fmt.Printf("oldTopics: %d\n", len(oldTopics))
 
 	oldTopicsSet := make([]map[int]bool, len(oldTopics))
 	for i := range oldTopics {
@@ -125,18 +119,12 @@ func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fil
 		newTopicsSet[i] = newOnes[i].getDSSet()
 	}
 
-	fmt.Printf("oldTopicsSet:%d\nnewTopicsSet:%d\n", len(oldTopicsSet), len(newTopicsSet))
-
 	new2old, old2new := findRelationsBetweenCategories(newTopicsSet, oldTopicsSet)
-
-	fmt.Printf("new2old: %d\n", len(new2old))
-	fmt.Printf("old2new: %d\n", len(old2new))
 
 	for i, v := range new2old {
 		n := len(v)
 
 		if n == 0 {
-			fmt.Println("find new")
 			file.saveNewTopic(newOnes[i])
 
 			continue
