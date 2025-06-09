@@ -242,10 +242,6 @@ func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, s
 func (ftr *fileToReview) saveOneDS(title, url string, row int, sheet string, color bool, colorValue int) (err error) {
 	f := ftr.file
 
-	if err = f.SetCellValue(sheet, cellId(columnA, row), ""); err != nil {
-		return
-	}
-
 	bcell := cellId(columnB, row)
 	ccell := cellId(columnC, row)
 	if err = f.SetCellValue(sheet, bcell, title); err != nil {
