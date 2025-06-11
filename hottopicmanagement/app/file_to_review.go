@@ -435,7 +435,7 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 		for _, i := range oldIds {
 			item := &oldTopics[i]
 
-			err = ftr.file.SetCellValue(sheetMultiIntersects, cellId(columnD, *row2), item.Title)
+			err = ftr.file.SetCellValue(sheetMultiIntersects, cellId(columnA, *row2), "以下讨论源属于旧话题："+item.Title)
 			if err != nil {
 				return
 			}
