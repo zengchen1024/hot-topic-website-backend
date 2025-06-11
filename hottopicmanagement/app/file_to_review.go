@@ -426,12 +426,22 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 		for _, i := range oldIds {
 			newSets = getDifferentiation(newSets, oldTopics[i].GetDSSet())
 		}
-		if err = ftr.saveLast(topic, newSets, row2); err != nil {
-			return
+		if len(newSets) > 0 {
+			if err = ftr.saveIntersectedDS(topic, newSets, row2, true); err != nil {
+				return
+			}
 		}
 
 		for _, i := range oldIds {
-			if err = ftr.saveOld(topic, &oldTopics[i], row2); err != nil {
+			item := &oldTopics[i]
+
+			err = ftr.file.SetCellValue(sheetMultiIntersects, cellId(columnD, *row2), item.Title)
+			if err != nil {
+				return
+			}
+
+			common := getIntersection(item.GetDSSet(), topic.getDSSet())
+			if err = ftr.saveIntersectedDS(topic, common, row2, false); err != nil {
 				return
 			}
 		}
@@ -442,46 +452,7 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 	return ftr.saveTopic(topic.Title, &ftr.rowMultiIntersects, sheetMultiIntersects, setDS)
 }
 
-func (ftr *fileToReview) saveOld(topic *OptionalTopic, oldTopic *domain.NotHotTopic, row1 *int) (err error) {
-	f := ftr.file
-	row := *row1
-	sheet := sheetMultiIntersects
-
-	if err = f.SetCellValue(sheet, cellId(columnD, row), oldTopic.Title); err != nil {
-		return
-	}
-
-	ds := dsInfo{}
-	common := getIntersection(oldTopic.GetDSSet(), topic.getDSSet())
-	for i := range topic.DiscussionSources {
-		item := topic.DiscussionSources[i]
-
-		if !common[item.Id] {
-			continue
-		}
-
-		ds = dsInfo{
-			url:    item.URL,
-			title:  item.Title,
-			Closed: item.Closed,
-		}
-		if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
-			return
-		}
-
-		row++
-	}
-
-	*row1 = row + 1
-
-	return nil
-}
-
-func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, row1 *int) (err error) {
-	if len(topicIds) == 0 {
-		return
-	}
-
+func (ftr *fileToReview) saveIntersectedDS(topic *OptionalTopic, topicIds map[int]bool, row1 *int, color bool) (err error) {
 	row := *row1
 	sheet := sheetMultiIntersects
 
@@ -498,7 +469,7 @@ func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, r
 			title:  item.Title,
 			Closed: item.Closed,
 		}
-		err = ftr.saveOneDS(&ds, row, sheet, true, ftr.appendedDiscussionSourceStyle)
+		err = ftr.saveOneDS(&ds, row, sheet, color, ftr.appendedDiscussionSourceStyle)
 		if err != nil {
 			return
 		}
