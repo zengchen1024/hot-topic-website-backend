@@ -51,7 +51,9 @@ func (ot *OptionalTopic) getDSSet() map[int]bool {
 
 // DiscussionSourceInfo
 type DiscussionSourceInfo struct {
-	Title string `json:"title" required:"true"`
+	Title  string `json:"title"      required:"true"`
+	Closed bool   `json:"is_closed"  required:"true"`
+
 	domain.DiscussionSource
 
 	appended bool // if true, it is newly appended to the old hot topic

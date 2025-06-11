@@ -239,21 +239,34 @@ func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, s
 	return
 }
 
-func (ftr *fileToReview) saveOneDS(title, url string, row int, sheet string, color bool, colorValue int) (err error) {
+type dsInfo struct {
+	url    string
+	title  string
+	Closed bool
+}
+
+func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool, colorValue int) (err error) {
 	f := ftr.file
 
 	bcell := cellId(columnB, row)
-	ccell := cellId(columnC, row)
-	if err = f.SetCellValue(sheet, bcell, title); err != nil {
+	if err = f.SetCellValue(sheet, bcell, ds.title); err != nil {
 		return
 	}
 
-	if err = f.SetCellValue(sheet, ccell, url); err != nil {
+	cell := cellId(columnC, row)
+	if err = f.SetCellValue(sheet, cell, ds.url); err != nil {
 		return
+	}
+
+	if ds.Closed {
+		cell := cellId(columnD, row)
+		if err = f.SetCellValue(sheet, cell, "Closed"); err != nil {
+			return
+		}
 	}
 
 	if color {
-		err = f.SetCellStyle(sheet, bcell, ccell, colorValue)
+		err = f.SetCellStyle(sheet, bcell, cell, colorValue)
 	}
 
 	return
@@ -295,9 +308,16 @@ func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, shee
 		row := *row2
 		column = columnC
 
+		ds := dsInfo{}
 		items := topic.sort()
 		for _, item := range items {
-			err = ftr.saveOneDS(item.Title, item.URL, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
+			ds = dsInfo{
+				url:    item.URL,
+				title:  item.Title,
+				Closed: item.Closed,
+			}
+
+			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -330,10 +350,16 @@ func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, shee
 		row := *row2
 		column = columnC
 
+		ds := dsInfo{}
 		for i := range topic.DiscussionSources {
 			item := &topic.DiscussionSources[i]
 
-			if err = ftr.saveOneDS(item.Title, item.URL, row, sheet, false, 0); err != nil {
+			ds = dsInfo{
+				url:    item.URL,
+				title:  item.Title,
+				Closed: item.Closed,
+			}
+			if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
 				return
 			}
 
@@ -367,9 +393,14 @@ func (ftr *fileToReview) saveTopicThatRemoveFromOld(oldTopic *domain.NotHotTopic
 
 		oldTopic.UpdateRemoved(dsIdsOfNewTopic)
 
+		ds := dsInfo{}
 		items := oldTopic.Sort()
 		for _, item := range items {
-			err = ftr.saveOneDS(item.Title, item.URL, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
+			ds = dsInfo{
+				url:   item.URL,
+				title: item.Title,
+			}
+			err = ftr.saveOneDS(&ds, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -392,14 +423,18 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 		column = columnC
 
 		newSets := topic.getDSSet()
+		for _, i := range oldIds {
+			newSets = getDifferentiation(newSets, oldTopics[i].GetDSSet())
+		}
+		if err = ftr.saveLast(topic, newSets, row2); err != nil {
+			return
+		}
 
 		for _, i := range oldIds {
-			if err = ftr.saveOld(topic, newSets, &oldTopics[i], row2); err != nil {
+			if err = ftr.saveOld(topic, &oldTopics[i], row2); err != nil {
 				return
 			}
 		}
-
-		err = ftr.saveLast(topic, newSets, row2)
 
 		return
 	}
@@ -407,7 +442,7 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 	return ftr.saveTopic(topic.Title, &ftr.rowMultiIntersects, sheetMultiIntersects, setDS)
 }
 
-func (ftr *fileToReview) saveOld(topic *OptionalTopic, topicIds map[int]bool, oldTopic *domain.NotHotTopic, row1 *int) (err error) {
+func (ftr *fileToReview) saveOld(topic *OptionalTopic, oldTopic *domain.NotHotTopic, row1 *int) (err error) {
 	f := ftr.file
 	row := *row1
 	sheet := sheetMultiIntersects
@@ -416,7 +451,8 @@ func (ftr *fileToReview) saveOld(topic *OptionalTopic, topicIds map[int]bool, ol
 		return
 	}
 
-	common := getIntersection(topicIds, oldTopic.GetDSSet())
+	ds := dsInfo{}
+	common := getIntersection(oldTopic.GetDSSet(), topic.getDSSet())
 	for i := range topic.DiscussionSources {
 		item := topic.DiscussionSources[i]
 
@@ -424,10 +460,12 @@ func (ftr *fileToReview) saveOld(topic *OptionalTopic, topicIds map[int]bool, ol
 			continue
 		}
 
-		delete(topicIds, item.Id)
-
-		err = ftr.saveOneDS(item.Title, item.URL, row, sheet, false, 0)
-		if err != nil {
+		ds = dsInfo{
+			url:    item.URL,
+			title:  item.Title,
+			Closed: item.Closed,
+		}
+		if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
 			return
 		}
 
@@ -440,9 +478,14 @@ func (ftr *fileToReview) saveOld(topic *OptionalTopic, topicIds map[int]bool, ol
 }
 
 func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, row1 *int) (err error) {
+	if len(topicIds) == 0 {
+		return
+	}
+
 	row := *row1
 	sheet := sheetMultiIntersects
 
+	ds := dsInfo{}
 	for i := range topic.DiscussionSources {
 		item := topic.DiscussionSources[i]
 
@@ -450,7 +493,12 @@ func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, r
 			continue
 		}
 
-		err = ftr.saveOneDS(item.Title, item.URL, row, sheet, true, ftr.appendedDiscussionSourceStyle)
+		ds = dsInfo{
+			url:    item.URL,
+			title:  item.Title,
+			Closed: item.Closed,
+		}
+		err = ftr.saveOneDS(&ds, row, sheet, true, ftr.appendedDiscussionSourceStyle)
 		if err != nil {
 			return
 		}
@@ -458,7 +506,7 @@ func (ftr *fileToReview) saveLast(topic *OptionalTopic, topicIds map[int]bool, r
 		row++
 	}
 
-	*row1 = row
+	*row1 = row + 1
 
 	return nil
 }

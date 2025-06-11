@@ -61,6 +61,18 @@ func getIntersection(a, b map[int]bool) map[int]bool {
 	return r
 }
 
+func getDifferentiation(a, b map[int]bool) map[int]bool {
+	r := map[int]bool{}
+
+	for k := range a {
+		if !b[k] {
+			r[k] = true
+		}
+	}
+
+	return r
+}
+
 func findRelationsBetweenCategories(newSets, oldSets []map[int]bool) (newToOld, oldToNew map[int][]int) {
 	newToOld = make(map[int][]int)
 	oldToNew = make(map[int][]int)
