@@ -272,7 +272,7 @@ func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool
 	return
 }
 
-func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map[int]*OptionalTopic) error {
+func (ftr *fileToReview) saveLastHotTopics(oldTopics []domain.HotTopic, current map[int]*OptionalTopic) error {
 	if len(oldTopics) == 0 {
 		return nil
 	}
@@ -295,12 +295,56 @@ func (ftr *fileToReview) saveLastTopics(oldTopics []domain.HotTopic, current map
 
 		item.updateAppended(old.GetDSSet())
 
-		if err := ftr.saveAppendedTopic(item, &row, sheetLastTopics); err != nil {
+		if err := ftr.saveHotTopic(item, &row, sheetLastTopics); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, row1 *int, sheet string) error {
+	setSubDS := func(row2 *int, infos DiscussionSourceInfos) (err error) {
+		row := *row2
+
+		ds := dsInfo{}
+		items := infos.sort()
+		for _, item := range items {
+			ds = dsInfo{
+				url:    item.URL,
+				title:  item.Title,
+				Closed: item.Closed,
+			}
+
+			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
+			if err != nil {
+				return
+			}
+
+			row++
+		}
+
+		*row2 = row
+
+		return
+	}
+
+	setDS := func(row2 *int) (column string, err error) {
+		column = columnC
+
+		for _, items := range topic.DiscussionSources {
+			if err = setSubDS(row2, items); err != nil {
+				return
+			}
+
+			(*row2)++
+		}
+
+		return
+	}
+
+	return ftr.saveTopic(topic.Title, row1, sheet, setDS)
+
 }
 
 func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, sheet string) error {
@@ -351,8 +395,8 @@ func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, shee
 		column = columnC
 
 		ds := dsInfo{}
-		for i := range topic.DiscussionSources {
-			item := &topic.DiscussionSources[i]
+		for i := range topic.discussionSources {
+			item := topic.discussionSources[i]
 
 			ds = dsInfo{
 				url:    item.URL,
@@ -457,8 +501,8 @@ func (ftr *fileToReview) saveIntersectedDS(topic *OptionalTopic, topicIds map[in
 	sheet := sheetMultiIntersects
 
 	ds := dsInfo{}
-	for i := range topic.DiscussionSources {
-		item := topic.DiscussionSources[i]
+	for i := range topic.discussionSources {
+		item := topic.discussionSources[i]
 
 		if !topicIds[item.Id] {
 			continue

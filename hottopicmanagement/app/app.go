@@ -31,6 +31,8 @@ type appService struct {
 }
 
 func (s *appService) ToReview(cmd CmdToUploadOptionalTopics) error {
+	cmd.init()
+
 	file, err := newfileToReview(s.filePath)
 	if err != nil {
 		return fmt.Errorf("new excel failed, err:%s", err.Error())
@@ -87,7 +89,7 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 		return nil, fmt.Errorf("the count of old topics is not matched, expect :%d, actual:%d", n, len(oldOnes))
 	}
 
-	if err := file.saveLastTopics(oldTopics, oldOnes); err != nil {
+	if err := file.saveLastHotTopics(oldTopics, oldOnes); err != nil {
 		return nil, err
 	}
 
@@ -104,7 +106,11 @@ func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fil
 		return err
 	}
 	if len(oldTopics) == 0 {
-		// TODO write new
+		for i := range newOnes {
+			if err := file.saveNewTopic(newOnes[i]); err != nil {
+				return err
+			}
+		}
 
 		return nil
 	}
@@ -125,7 +131,9 @@ func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fil
 		n := len(v)
 
 		if n == 0 {
-			file.saveNewTopic(newOnes[i])
+			if err := file.saveNewTopic(newOnes[i]); err != nil {
+				return err
+			}
 
 			continue
 		}

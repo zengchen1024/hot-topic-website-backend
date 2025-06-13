@@ -6,15 +6,62 @@ import (
 
 type CmdToUploadOptionalTopics []OptionalTopic
 
+func (cmd CmdToUploadOptionalTopics) init() {
+	for i := range cmd {
+		cmd[i].init()
+	}
+}
+
+type DiscussionSourceInfos []DiscussionSourceInfo
+
+func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
+	v := make([]*DiscussionSourceInfo, len(infos))
+	h := 0
+	t := len(v) - 1
+	for i := range infos {
+		if item := &infos[i]; item.appended {
+			v[h] = item
+			h++
+		} else {
+			v[t] = item
+			t--
+		}
+	}
+
+	return v
+}
+
 // OptionalTopic
 type OptionalTopic struct {
-	Title             string                 `json:"summary"    required:"true"`
-	DiscussionSources []DiscussionSourceInfo `json:"discussion" required:"true"`
+	Title             string                  `json:"summary"    required:"true"`
+	DiscussionSources []DiscussionSourceInfos `json:"discussion" required:"true"`
+
+	discussionSources []*DiscussionSourceInfo
+	total             int
+}
+
+func (ot *OptionalTopic) init() {
+	n := 0
+	for i := range ot.DiscussionSources {
+		n += len(ot.DiscussionSources[i])
+	}
+	ot.total = n
+
+	items := make([]*DiscussionSourceInfo, n)
+	k := 0
+	for i := range ot.DiscussionSources {
+		s1 := ot.DiscussionSources[i]
+		for j := range s1 {
+			items[k] = &s1[j]
+			k++
+		}
+	}
+	ot.discussionSources = items
 }
 
 func (ot *OptionalTopic) updateAppended(dsIdsOfOldTopic map[int]bool) {
-	for i := range ot.DiscussionSources {
-		item := &ot.DiscussionSources[i]
+	for i := range ot.discussionSources {
+		item := ot.discussionSources[i]
 
 		if _, ok := dsIdsOfOldTopic[item.Id]; !ok {
 			item.appended = true
@@ -23,11 +70,11 @@ func (ot *OptionalTopic) updateAppended(dsIdsOfOldTopic map[int]bool) {
 }
 
 func (ot *OptionalTopic) sort() []*DiscussionSourceInfo {
-	v := make([]*DiscussionSourceInfo, len(ot.DiscussionSources))
+	v := make([]*DiscussionSourceInfo, ot.total)
 	h := 0
 	t := len(v) - 1
-	for i := range ot.DiscussionSources {
-		if item := &ot.DiscussionSources[i]; item.appended {
+	for i := range ot.discussionSources {
+		if item := ot.discussionSources[i]; item.appended {
 			v[h] = item
 			h++
 		} else {
@@ -40,10 +87,10 @@ func (ot *OptionalTopic) sort() []*DiscussionSourceInfo {
 }
 
 func (ot *OptionalTopic) getDSSet() map[int]bool {
-	v := make(map[int]bool, len(ot.DiscussionSources))
+	v := make(map[int]bool, ot.total)
 
-	for i := range ot.DiscussionSources {
-		v[ot.DiscussionSources[i].Id] = true
+	for i := range ot.discussionSources {
+		v[ot.discussionSources[i].Id] = true
 	}
 
 	return v
