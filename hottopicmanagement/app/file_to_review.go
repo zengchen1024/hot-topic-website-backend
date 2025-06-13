@@ -22,6 +22,7 @@ const (
 	columnB = "B"
 	columnC = "C"
 	columnD = "D"
+	columnF = "F"
 
 	rowStart = 3
 )
@@ -240,9 +241,17 @@ func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, s
 }
 
 type dsInfo struct {
-	url    string
+	*domain.DiscussionSource
+
 	title  string
 	Closed bool
+}
+
+func (ds *dsInfo) metaData() string {
+	return fmt.Sprintf(
+		"{\"id\":%d, \"source_type\":%s, \"source_id\":%s, \"created_at\":%s",
+		ds.Id, ds.Type, ds.SourceId, ds.CreatedAt,
+	)
 }
 
 func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool, colorValue int) (err error) {
@@ -253,13 +262,17 @@ func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool
 		return
 	}
 
-	cell := cellId(columnC, row)
-	if err = f.SetCellValue(sheet, cell, ds.url); err != nil {
+	if err = f.SetCellValue(sheet, cellId(columnC, row), ds.URL); err != nil {
+		return
+	}
+
+	cell := cellId(columnD, row)
+	if err = f.SetCellValue(sheet, cell, ds.metaData()); err != nil {
 		return
 	}
 
 	if ds.Closed {
-		cell := cellId(columnD, row)
+		cell := cellId(columnF, row)
 		if err = f.SetCellValue(sheet, cell, "Closed"); err != nil {
 			return
 		}
@@ -272,7 +285,7 @@ func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool
 	return
 }
 
-func (ftr *fileToReview) saveLastHotTopics(oldTopics []domain.HotTopic, current map[int]*OptionalTopic) error {
+func (ftr *fileToReview) saveLastHotTopics(oldTopics []domain.HotTopic, current map[string]*OptionalTopic) error {
 	if len(oldTopics) == 0 {
 		return nil
 	}
@@ -288,14 +301,14 @@ func (ftr *fileToReview) saveLastHotTopics(oldTopics []domain.HotTopic, current 
 	for i := range oldTopics {
 		old := &oldTopics[i]
 
-		item, ok := current[old.Order]
+		item, ok := current[old.Title]
 		if !ok {
 			return errors.New("can't find topic from current ones")
 		}
 
 		item.updateAppended(old.GetDSSet())
 
-		if err := ftr.saveHotTopic(item, &row, sheetLastTopics); err != nil {
+		if err := ftr.saveHotTopic(item, old, &row, sheetLastTopics); err != nil {
 			return err
 		}
 	}
@@ -303,7 +316,7 @@ func (ftr *fileToReview) saveLastHotTopics(oldTopics []domain.HotTopic, current 
 	return nil
 }
 
-func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, row1 *int, sheet string) error {
+func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, oldTopic *domain.HotTopic, row1 *int, sheet string) error {
 	setSubDS := func(row2 *int, infos DiscussionSourceInfos) (err error) {
 		row := *row2
 
@@ -311,9 +324,9 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, row1 *int, sheet str
 		items := infos.sort()
 		for _, item := range items {
 			ds = dsInfo{
-				url:    item.URL,
-				title:  item.Title,
-				Closed: item.Closed,
+				DiscussionSource: &item.DiscussionSource,
+				title:            item.Title,
+				Closed:           item.Closed,
 			}
 
 			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
@@ -343,8 +356,27 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, row1 *int, sheet str
 		return
 	}
 
-	return ftr.saveTopic(topic.Title, row1, sheet, setDS)
+	setCell := func(cell, value string) error {
+		return ftr.file.SetCellValue(sheet, cellId(cell, *row1), value)
+	}
 
+	if err := setCell(columnA, "Id"); err != nil {
+		return err
+	}
+	if err := setCell(columnB, oldTopic.Id); err != nil {
+		return err
+	}
+	(*row1)++
+
+	if err := setCell(columnA, "顺序"); err != nil {
+		return err
+	}
+	if err := setCell(columnB, strconv.Itoa(oldTopic.Order)); err != nil {
+		return err
+	}
+	(*row1)++
+
+	return ftr.saveTopic(topic.Title, row1, sheet, setDS)
 }
 
 func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, sheet string) error {
@@ -356,9 +388,9 @@ func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, shee
 		items := topic.sort()
 		for _, item := range items {
 			ds = dsInfo{
-				url:    item.URL,
-				title:  item.Title,
-				Closed: item.Closed,
+				DiscussionSource: &item.DiscussionSource,
+				title:            item.Title,
+				Closed:           item.Closed,
 			}
 
 			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
@@ -399,9 +431,9 @@ func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, shee
 			item := topic.discussionSources[i]
 
 			ds = dsInfo{
-				url:    item.URL,
-				title:  item.Title,
-				Closed: item.Closed,
+				DiscussionSource: &item.DiscussionSource,
+				title:            item.Title,
+				Closed:           item.Closed,
 			}
 			if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
 				return
@@ -438,11 +470,15 @@ func (ftr *fileToReview) saveTopicThatRemoveFromOld(oldTopic *domain.NotHotTopic
 		oldTopic.UpdateRemoved(dsIdsOfNewTopic)
 
 		ds := dsInfo{}
+		source := domain.DiscussionSource{}
 		items := oldTopic.Sort()
 		for _, item := range items {
+			source.Id = item.Id
+			source.URL = item.URL
+
 			ds = dsInfo{
-				url:   item.URL,
-				title: item.Title,
+				title:            item.Title,
+				DiscussionSource: &source,
 			}
 			err = ftr.saveOneDS(&ds, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
 			if err != nil {
@@ -509,9 +545,9 @@ func (ftr *fileToReview) saveIntersectedDS(topic *OptionalTopic, topicIds map[in
 		}
 
 		ds = dsInfo{
-			url:    item.URL,
-			title:  item.Title,
-			Closed: item.Closed,
+			DiscussionSource: &item.DiscussionSource,
+			title:            item.Title,
+			Closed:           item.Closed,
 		}
 		err = ftr.saveOneDS(&ds, row, sheet, color, ftr.appendedDiscussionSourceStyle)
 		if err != nil {

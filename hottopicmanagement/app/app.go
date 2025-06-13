@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 )
 
@@ -65,21 +64,20 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 		return nil, errors.New("no old topics")
 	}
 
-	oldTopicsMap := make(map[string]*domain.HotTopic, len(oldTopics))
+	oldTopicsSets := make(map[string]bool, len(oldTopics))
 	for i := range oldTopics {
 		item := &oldTopics[i]
-		oldTopicsMap[item.Title] = item
+		oldTopicsSets[item.Title] = true
 	}
 
-	oldOnes := make(map[int]*OptionalTopic, len(cmd))
+	oldOnes := make(map[string]*OptionalTopic, len(cmd))
 	newOnes := make([]*OptionalTopic, 0, len(cmd))
 
 	for i := range cmd {
 		item := &cmd[i]
 
-		old, ok := oldTopicsMap[item.Title]
-		if ok {
-			oldOnes[old.Order] = item
+		if _, ok := oldTopicsSets[item.Title]; ok {
+			oldOnes[item.Title] = item
 		} else {
 			newOnes = append(newOnes, item)
 		}
