@@ -249,7 +249,7 @@ type dsInfo struct {
 
 func (ds *dsInfo) metaData() string {
 	return fmt.Sprintf(
-		"{\"id\":%d, \"source_type\":%s, \"source_id\":%s, \"created_at\":%s",
+		"{\"id\":%d, \"source_type\":%s, \"source_id\":%s, \"created_at\":%s}",
 		ds.Id, ds.Type, ds.SourceId, ds.CreatedAt,
 	)
 }
