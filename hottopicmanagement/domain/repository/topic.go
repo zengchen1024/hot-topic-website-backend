@@ -3,11 +3,11 @@ package repository
 import "github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 
 type RepoHotTopic interface {
-	Add(*domain.HotTopic) error
-	FindOpenOnes() ([]domain.HotTopic, error)
+	Add(string, *domain.HotTopic) error
+	FindOpenOnes(string) ([]domain.HotTopic, error)
 }
 
 type RepoNotHotTopic interface {
-	Add(*domain.NotHotTopic) error
-	FindAll() ([]domain.NotHotTopic, error)
+	Add(string, *domain.NotHotTopic) error
+	FindAll(string) ([]domain.NotHotTopic, error)
 }

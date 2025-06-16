@@ -1,13 +1,26 @@
 package repositoryimpl
 
 type Config struct {
-	Collections Collections `json:"collections"`
+	CommunityCollections []CommunityCollections `json:"Community_collections"`
 }
 
 func (cfg *Config) ConfigItems() []interface{} {
-	return []interface{}{
-		&cfg.Collections,
+	r := make([]interface{}, len(cfg.CommunityCollections))
+
+	for i := range cfg.CommunityCollections {
+		r[i] = &cfg.CommunityCollections[i]
 	}
+
+	return r
+}
+
+type CommunityCollections struct {
+	Community   string      `json:"community"    required:"true"`
+	Collections Collections `json:"collections"`
+}
+
+func (cfg *CommunityCollections) ConfigItems() []interface{} {
+	return []interface{}{&cfg.Collections}
 }
 
 type Collections struct {

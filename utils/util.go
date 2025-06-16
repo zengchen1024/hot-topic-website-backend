@@ -12,6 +12,8 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+const layout = "2006-01-02"
+
 // LoadFromYaml reads a YAML file from the given path and unmarshals it into the provided interface.
 func LoadFromYaml(path string, cfg interface{}) error {
 	b, err := os.ReadFile(path) // #nosec G304
@@ -24,4 +26,8 @@ func LoadFromYaml(path string, cfg interface{}) error {
 
 func Now() int64 {
 	return time.Now().Unix()
+}
+
+func Date() string {
+	return time.Now().Format(layout)
 }

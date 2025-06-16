@@ -7,17 +7,17 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
-func NewNotHotTopic(dao dao) *notNotHotTopic {
-	return &notNotHotTopic{
-		dao: dao,
+func NewNotHotTopic(dao map[string]Dao) *notHotTopic {
+	return &notHotTopic{
+		daoMap: dao,
 	}
 }
 
-type notNotHotTopic struct {
-	dao dao
+type notHotTopic struct {
+	daoMap
 }
 
-func (impl *notNotHotTopic) Add(v *domain.NotHotTopic) error {
+func (impl *notHotTopic) Add(community string, v *domain.NotHotTopic) error {
 	do := tonotNotHotTopicDO(v)
 	doc, err := do.toDoc()
 	if err != nil {
@@ -26,18 +26,28 @@ func (impl *notNotHotTopic) Add(v *domain.NotHotTopic) error {
 
 	docFilter := bson.M{fieldTitle: v.Title}
 
-	_, err = impl.dao.InsertDocIfNotExists(docFilter, doc)
-	if err != nil && impl.dao.IsDocExists(err) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return err
+	}
+
+	_, err = dao.InsertDocIfNotExists(docFilter, doc)
+	if err != nil && dao.IsDocExists(err) {
 		err = commonRepo.NewErrorDuplicateCreating(err)
 	}
 
 	return err
 }
 
-func (impl *notNotHotTopic) FindAll() ([]domain.NotHotTopic, error) {
+func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return nil, err
+	}
+
 	var dos []notNotHotTopicDO
 
-	if err := impl.dao.GetDocs(nil, nil, nil, &dos); err != nil {
+	if err := dao.GetDocs(nil, nil, nil, &dos); err != nil {
 		return nil, err
 	}
 

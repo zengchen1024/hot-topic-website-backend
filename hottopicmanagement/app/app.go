@@ -3,12 +3,14 @@ package app
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
+	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 type AppService interface {
-	ToReview(CmdToUploadOptionalTopics) error
+	ToReview(string, CmdToUploadOptionalTopics) error
 }
 
 func NewAppService(
@@ -29,20 +31,24 @@ type appService struct {
 	repoNotHotTopic repository.RepoNotHotTopic
 }
 
-func (s *appService) ToReview(cmd CmdToUploadOptionalTopics) error {
+func (s *appService) reviewFile(community string) string {
+	return filepath.Join(s.filePath, fmt.Sprintf("%s_%s.xlsx", community, utils.Date()))
+}
+
+func (s *appService) ToReview(community string, cmd CmdToUploadOptionalTopics) error {
 	cmd.init()
 
-	file, err := newfileToReview(s.filePath)
+	file, err := newfileToReview(s.reviewFile(community))
 	if err != nil {
 		return fmt.Errorf("new excel failed, err:%s", err.Error())
 	}
 
-	newOnes, err := s.handleOldTopics(cmd, file)
+	newOnes, err := s.handleOldTopics(community, cmd, file)
 	if err != nil {
 		return err
 	}
 
-	if err := s.handleNewOptionalTopics(newOnes, file); err != nil {
+	if err := s.handleNewOptionalTopics(community, newOnes, file); err != nil {
 		return err
 	}
 
@@ -55,8 +61,8 @@ func (s *appService) ToReview(cmd CmdToUploadOptionalTopics) error {
 	return nil
 }
 
-func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileToReview) ([]*OptionalTopic, error) {
-	oldTopics, err := s.repoHotTopic.FindOpenOnes() // TODO check if ordered by HotTopic's Order
+func (s *appService) handleOldTopics(community string, cmd CmdToUploadOptionalTopics, file *fileToReview) ([]*OptionalTopic, error) {
+	oldTopics, err := s.repoHotTopic.FindOpenOnes(community)
 	if err != nil {
 		return nil, err
 	}
@@ -94,12 +100,12 @@ func (s *appService) handleOldTopics(cmd CmdToUploadOptionalTopics, file *fileTo
 	return newOnes, nil
 }
 
-func (s *appService) handleNewOptionalTopics(newOnes []*OptionalTopic, file *fileToReview) error {
+func (s *appService) handleNewOptionalTopics(community string, newOnes []*OptionalTopic, file *fileToReview) error {
 	if len(newOnes) == 0 {
 		return errors.New("no new topics")
 	}
 
-	oldTopics, err := s.repoNotHotTopic.FindAll()
+	oldTopics, err := s.repoNotHotTopic.FindAll(community)
 	if err != nil {
 		return err
 	}
