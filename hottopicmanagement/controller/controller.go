@@ -20,7 +20,7 @@ func AddInternalRouterForHotTopicController(
 		appService: s,
 	}
 
-	r.POST("/v1/hot-topic/to-review", ctl.ToReview)
+	r.POST("/v1/hot-topic/:community/to-review", ctl.ToReview)
 }
 
 type HotTopicController struct {
