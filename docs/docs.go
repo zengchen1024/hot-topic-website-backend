@@ -63,14 +63,14 @@ const docTemplate = `{
         "app.DiscussionSourceInfo": {
             "type": "object",
             "properties": {
+                "closed": {
+                    "type": "boolean"
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "id": {
                     "type": "integer"
-                },
-                "is_closed": {
-                    "type": "boolean"
                 },
                 "source_id": {
                     "type": "string"

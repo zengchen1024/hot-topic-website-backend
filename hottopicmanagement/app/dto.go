@@ -98,8 +98,8 @@ func (ot *OptionalTopic) getDSSet() map[int]bool {
 
 // DiscussionSourceInfo
 type DiscussionSourceInfo struct {
-	Title  string `json:"title"      required:"true"`
-	Closed bool   `json:"is_closed"  required:"true"`
+	Title  string `json:"title"   required:"true"`
+	Closed bool   `json:"closed"  required:"true"`
 
 	domain.DiscussionSource
 
