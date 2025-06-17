@@ -1,12 +1,12 @@
 definitions:
   app.DiscussionSourceInfo:
     properties:
-      closed:
-        type: boolean
       created_at:
         type: string
       id:
         type: integer
+      source_closed:
+        type: boolean
       source_id:
         type: string
       source_type:
