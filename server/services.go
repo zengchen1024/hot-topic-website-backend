@@ -15,6 +15,9 @@ type allServices struct {
 }
 
 func initServices(cfg *config.Config) (services allServices, err error) {
+	if err = initHotTopicManagement(cfg, &services); err != nil {
+		return
+	}
 
 	return
 }
