@@ -5,8 +5,6 @@ Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved
 // Package config provides functionality for managing application configuration.
 package config
 
-import "log"
-
 type configValidate interface {
 	Validate() error
 }
@@ -37,7 +35,6 @@ func SetDefault(cfg interface{}) {
 func Validate(cfg interface{}) error {
 	if f, ok := cfg.(configValidate); ok {
 		if err := f.Validate(); err != nil {
-			log.Println(" Validate  err", err.Error())
 			return err
 		}
 	}

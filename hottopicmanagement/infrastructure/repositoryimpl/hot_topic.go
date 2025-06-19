@@ -7,17 +7,17 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
-func NewHotTopic(dao dao) *hotTopic {
+func NewHotTopic(dao map[string]Dao) *hotTopic {
 	return &hotTopic{
-		dao: dao,
+		daoMap: dao,
 	}
 }
 
 type hotTopic struct {
-	dao dao
+	daoMap
 }
 
-func (impl *hotTopic) Add(v *domain.HotTopic) error {
+func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	do := tohotTopicDO(v)
 	doc, err := do.toDoc()
 	if err != nil {
@@ -28,15 +28,25 @@ func (impl *hotTopic) Add(v *domain.HotTopic) error {
 
 	docFilter := bson.M{fieldTitle: v.Title}
 
-	_, err = impl.dao.InsertDocIfNotExists(docFilter, doc)
-	if err != nil && impl.dao.IsDocExists(err) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return err
+	}
+
+	_, err = dao.InsertDocIfNotExists(docFilter, doc)
+	if err != nil && dao.IsDocExists(err) {
 		err = commonRepo.NewErrorDuplicateCreating(err)
 	}
 
 	return err
 }
 
-func (impl *hotTopic) FindOpenOnes() ([]domain.HotTopic, error) {
+func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return nil, err
+	}
+
 	filter := bson.M{
 		fieldClosedAt: 0,
 	}
@@ -47,7 +57,7 @@ func (impl *hotTopic) FindOpenOnes() ([]domain.HotTopic, error) {
 
 	var dos []hotTopicDO
 
-	if err := impl.dao.GetDocs(filter, nil, sort, &dos); err != nil {
+	if err := dao.GetDocs(filter, nil, sort, &dos); err != nil {
 		return nil, err
 	}
 

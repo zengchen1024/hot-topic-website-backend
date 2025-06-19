@@ -2,6 +2,7 @@ package repositoryimpl
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,7 +17,7 @@ const (
 
 type anyDoc = map[string]string
 
-type dao interface {
+type Dao interface {
 	IsDocNotExists(error) bool
 	IsDocExists(error) bool
 
@@ -59,4 +60,15 @@ func genDoc(doc interface{}) (m bson.M, err error) {
 
 func childField(fields ...string) string {
 	return strings.Join(fields, ".")
+}
+
+type daoMap map[string]Dao
+
+func (m daoMap) dao(community string) (Dao, error) {
+	v, ok := m[community]
+	if !ok {
+		return nil, fmt.Errorf("can't find dao for %s", community)
+	}
+
+	return v, nil
 }

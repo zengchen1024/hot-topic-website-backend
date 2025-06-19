@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,9 +18,8 @@ import (
 var cli *client
 
 func Init(cfg *Config) error {
-	rootPEM, err := ioutil.ReadFile(cfg.CAFile)
-	//err1 := os.Remove(cfg.CAFile)
-	var err1 error
+	rootPEM, err := os.ReadFile(cfg.CAFile)
+	err1 := os.Remove(cfg.CAFile)
 	if err2 := utils.MultiErrors(err, err1); err2 != nil {
 		return err2
 	}

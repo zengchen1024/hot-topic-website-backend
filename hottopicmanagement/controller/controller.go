@@ -20,21 +20,22 @@ func AddInternalRouterForHotTopicController(
 		appService: s,
 	}
 
-	r.GET("/v1/hot-topic/to-review", ctl.ToReview)
+	r.POST("/v1/hot-topic/:community/to-review", ctl.ToReview)
 }
 
 type HotTopicController struct {
 	appService app.AppService
 }
 
-// @Summary  ToReview
+// @Summary      ToReview
 // @Description  upload topics to review
-// @Tags     HotTopic
-// @Param    body  body  reqToReview  true  "body"
-// @Accept   json
-// @Security Internal
-// @Success  201  {object}  commonctl.ResponseData{data=nil,msg=string,code=string}
-// @Router   /v1/hot-topic/to-review [post]
+// @Tags         HotTopic
+// @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
+// @Param        body        body    reqToReview   true    "body"
+// @Accept       json
+// @Security     Internal
+// @Success      201    {object}    commonctl.ResponseData{}
+// @Router       /v1/hot-topic/{community}/to-review [post]
 func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
 	req := reqToReview{}
 
@@ -51,7 +52,7 @@ func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctl.appService.ToReview(cmd); err != nil {
+	if err := ctl.appService.ToReview(ctx.Param("community"), cmd); err != nil {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfPost(ctx, nil)

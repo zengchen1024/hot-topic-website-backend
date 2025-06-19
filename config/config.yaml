@@ -1,0 +1,19 @@
+mongodb:
+  conn: ""
+  db: ""
+  ca_file: ""
+
+hot_topic_management:
+  app:
+    filt_path: ""
+  repo:
+    Community_collections:
+    - community: openubmc
+      collections:
+        hot_topic: openubmc_hot_topic
+        not_hot_topic: openubmc_not_hot_topic
+
+    - community: cann
+      collections:
+        hot_topic: cann_hot_topic
+        not_hot_topic: cann_not_hot_topic

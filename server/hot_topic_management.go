@@ -17,10 +17,20 @@ import (
 
 func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 	htCfg := &cfg.HotTopicManagement
+	hm := map[string]repositoryimpl.Dao{}
+	nhm := map[string]repositoryimpl.Dao{}
+
+	items := htCfg.Repo.CommunityCollections
+	for i := range items {
+		item := &items[i]
+		hm[item.Community] = mongodb.DAO(item.Collections.HotTopic)
+		nhm[item.Community] = mongodb.DAO(item.Collections.NotHotTopic)
+	}
+
 	services.hottopicmanagementApp = app.NewAppService(
 		&htCfg.App,
-		repositoryimpl.NewHotTopic(mongodb.DAO(htCfg.Repo.Collections.HotTopic)),
-		repositoryimpl.NewNotHotTopic(mongodb.DAO(htCfg.Repo.Collections.NotHotTopic)),
+		repositoryimpl.NewHotTopic(hm),
+		repositoryimpl.NewNotHotTopic(nhm),
 	)
 
 	return nil

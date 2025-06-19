@@ -49,6 +49,7 @@ func (cfg *Config) Init() error {
 // ConfigItems returns a slice of interface{} containing pointers to the configuration items.
 func (cfg *Config) ConfigItems() []interface{} {
 	return []interface{}{
+		&cfg.MongoDB,
 		&cfg.HotTopicManagement,
 	}
 }

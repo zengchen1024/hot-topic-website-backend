@@ -1,0 +1,81 @@
+definitions:
+  app.DiscussionSourceInfo:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      source_closed:
+        type: boolean
+      source_id:
+        type: string
+      source_type:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+  app.OptionalTopic:
+    properties:
+      discussion:
+        items:
+          items:
+            $ref: '#/definitions/app.DiscussionSourceInfo'
+          type: array
+        type: array
+      summary:
+        type: string
+    type: object
+  controller.ResponseData:
+    properties:
+      code:
+        type: string
+      data: {}
+      msg:
+        type: string
+    type: object
+  controller.reqToReview:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/app.OptionalTopic'
+        type: array
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/hot-topic/{community}/to-review:
+    post:
+      consumes:
+      - application/json
+      description: upload topics to review
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.reqToReview'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.ResponseData'
+      security:
+      - Internal: []
+      summary: ToReview
+      tags:
+      - HotTopic
+securityDefinitions:
+  Internal:
+    description: Type "Internal" followed by a space and internal token.
+    in: header
+    name: TOKEN
+    type: apiKey
+swagger: "2.0"
