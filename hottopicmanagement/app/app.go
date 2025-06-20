@@ -67,7 +67,14 @@ func (s *appService) handleOldTopics(community string, cmd CmdToUploadOptionalTo
 		return nil, err
 	}
 	if len(oldTopics) == 0 {
-		return nil, errors.New("no old topics")
+		newOnes := make([]*OptionalTopic, len(cmd))
+		for i := range cmd {
+			newOnes[i] = &cmd[i]
+		}
+
+		fmt.Println("no old topics")
+
+		return newOnes, nil
 	}
 
 	oldTopicsSets := make(map[string]bool, len(oldTopics))
