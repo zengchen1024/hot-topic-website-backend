@@ -17,3 +17,8 @@ hot_topic_management:
       collections:
         hot_topic: cann_hot_topic
         not_hot_topic: cann_not_hot_topic
+
+    - community: opengauss
+      collections:
+        hot_topic: opengauss_hot_topic
+        not_hot_topic: opengauss_not_hot_topic

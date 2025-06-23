@@ -22,7 +22,7 @@ const (
 	columnB = "B"
 	columnC = "C"
 	columnD = "D"
-	columnF = "F"
+	columnE = "E"
 
 	rowStart = 3
 )
@@ -272,7 +272,7 @@ func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool
 	}
 
 	if ds.Closed {
-		cell := cellId(columnF, row)
+		cell := cellId(columnE, row)
 		if err = f.SetCellValue(sheet, cell, "Closed"); err != nil {
 			return
 		}
