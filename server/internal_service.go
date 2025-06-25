@@ -15,5 +15,7 @@ func setInternalRouter(prefix string, engine *gin.Engine, cfg *config.Config, se
 	rg := engine.Group(prefix)
 
 	// set routers
-	setInternalRouterForHotTopicManagement(cfg, rg, services)
+	setInternalRouterForHotTopicManagement(rg, services)
+
+	setInternalRouterForTopicSolution(rg, services)
 }

@@ -35,6 +35,13 @@ definitions:
       msg:
         type: string
     type: object
+  controller.reqToAddSolution:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/app.OptionalTopic'
+        type: array
+    type: object
   controller.reqToReview:
     properties:
       data:
@@ -45,6 +52,33 @@ definitions:
 info:
   contact: {}
 paths:
+  /v1/hot-topic/{community}/solution:
+    post:
+      consumes:
+      - application/json
+      description: add topic solution
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.reqToAddSolution'
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/controller.ResponseData'
+      security:
+      - Internal: []
+      summary: ToReview
+      tags:
+      - HotTopic
   /v1/hot-topic/{community}/to-review:
     post:
       consumes:

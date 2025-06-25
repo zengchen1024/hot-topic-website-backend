@@ -14,6 +14,29 @@ func (cmd CmdToUploadOptionalTopics) init() {
 
 type DiscussionSourceInfos []DiscussionSourceInfo
 
+func (infos DiscussionSourceInfos) filterout() (resolved, unresolved []*DiscussionSourceInfo) {
+	for i := range infos {
+		if item := &infos[i]; item.Closed {
+			resolved = append(resolved, item)
+		} else {
+			unresolved = append(unresolved, item)
+		}
+	}
+
+	return
+}
+
+func (infos DiscussionSourceInfos) resolvedNum() int {
+	num := 0
+	for i := range infos {
+		if infos[i].Closed {
+			num++
+		}
+	}
+
+	return num
+}
+
 func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
 	v := make([]*DiscussionSourceInfo, len(infos))
 	h := 0

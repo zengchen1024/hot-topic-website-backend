@@ -11,6 +11,7 @@ import (
 )
 
 type allServices struct {
+	topicSolutionApp      hottopicmanagementapp.TopicSolutionAppService
 	hottopicmanagementApp hottopicmanagementapp.AppService
 }
 
