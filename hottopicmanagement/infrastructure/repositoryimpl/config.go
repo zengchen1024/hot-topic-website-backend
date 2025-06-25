@@ -27,4 +27,5 @@ func (cfg *CommunityCollections) ConfigItems() []interface{} {
 type Collections struct {
 	HotTopic    string `json:"hot_topic"       required:"true"`
 	NotHotTopic string `json:"not_hot_topic"   required:"true"`
+	TopicReport string `json:"topic_report"	   required:"true"`
 }

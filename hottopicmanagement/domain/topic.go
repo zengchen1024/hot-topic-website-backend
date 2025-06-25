@@ -23,6 +23,18 @@ type HotTopic struct {
 	Version           int
 }
 
+// TopicReport
+type TopicTopN struct {
+	Idx     int    `json:"idx" bson:"idx"`
+	TopicId string `json:"topic_id" bson:"topic"`
+}
+type TopicReport struct {
+	Year int         `json:"year" bson:"year"`
+	Week int         `json:"week" bson:"year"`
+	Cnt  int         `json:"cnt" bson:"cnt"`
+	TopN []TopicTopN `json:"topn" bson:"topn"`
+}
+
 func NewHotTopic(title string, order int, sources []DiscussionSource, createdAt string) HotTopic {
 	return HotTopic{
 		Title:             title,
