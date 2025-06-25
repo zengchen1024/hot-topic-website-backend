@@ -234,18 +234,22 @@ func (impl *daoImpl) UpdateArraySingleItem(filter bson.M, array string, filterOf
 	})
 }
 
-func (impl *daoImpl) GetDoc(filter, project bson.M, result interface{}) error {
+func (impl *daoImpl) GetDoc(filter, project, sort bson.M, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
-		var sr *mongo.SingleResult
-
+		opts := []*options.FindOneOptions{}
 		if len(project) > 0 {
-			sr = impl.col.FindOne(ctx, filter, &options.FindOneOptions{
+			opts = append(opts, &options.FindOneOptions{
 				Projection: project,
 			})
-		} else {
-			sr = impl.col.FindOne(ctx, filter)
 		}
 
+		if len(sort) > 0 {
+			opts = append(opts, &options.FindOneOptions{
+				Sort: sort,
+			})
+		}
+
+		sr := impl.col.FindOne(ctx, filter)
 		err := sr.Decode(result)
 		if err != nil && isErrOfNoDocuments(err) {
 			return errDocNotExists
