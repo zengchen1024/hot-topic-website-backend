@@ -110,3 +110,11 @@ func (impl *topicReport) GetCurrentReport(community string) (report domain.Topic
 	year, week := time.Now().ISOWeek()
 	return impl.GetTopicReport(community, year, week)
 }
+
+// Get  hot topic in last week
+func (impl *topicReport) GetLastWeekTopic(community string) (report domain.TopicReport, err error) {
+	now := time.Now()
+	sevenDayAgo := now.AddDate(0, 0, -7)
+	year, week := sevenDayAgo.ISOWeek()
+	return impl.GetTopicReport(community, year, week)
+}

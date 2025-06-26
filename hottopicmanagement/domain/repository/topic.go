@@ -19,4 +19,5 @@ type RepoTopicReport interface {
 	UpdateTopic(string, int, int, *domain.HotTopic) error
 	GetTopicReport(string, int, int) (domain.TopicReport, error)
 	GetCurrentReport(string) (domain.TopicReport, error)
+	GetLastWeekTopic(string) (domain.TopicReport, error)
 }
