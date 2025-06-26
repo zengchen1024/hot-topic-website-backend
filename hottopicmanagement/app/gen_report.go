@@ -11,10 +11,10 @@ const (
 	keyHotTopics = "hot_topics"
 )
 
-func (s *appService) GenReport(community string) (string, error) {
+func (s *appService) GenReport(community string) ([]byte, error) {
 	dbReport, err := s.repoTopicReport.GetCurrentReport(community)
 	if err != nil {
-		return "Get DB report failed.", err
+		return []byte(err.Error()), err
 	}
 	var report map[string]interface{}
 	mapstructure.Decode(dbReport, &report)
@@ -30,9 +30,9 @@ func (s *appService) GenReport(community string) (string, error) {
 
 	jsonData, err := json.Marshal(report)
 	if err != nil {
-		return "Data to json failed.", err
+		return []byte(err.Error()), err
 	}
 
 	// return json string
-	return string(jsonData), nil
+	return jsonData, nil
 }

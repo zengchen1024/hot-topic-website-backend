@@ -58,3 +58,21 @@ func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
 		commonctl.SendRespOfPost(ctx, nil)
 	}
 }
+
+// @Summary      GetTopicReport
+// @Description  upload topics to review
+// @Tags         HotTopic
+// @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
+// @Accept       json
+// @Security     Internal
+// @Success      201    {object}    commonctl.ResponseData{}
+// @Router       /v1/hot-topic/{community}/to-review [post]
+func (ctl *HotTopicController) GetTopicReport(ctx *gin.Context) {
+
+	data, err := ctl.appService.GenReport(ctx.Param("community"))
+	if err != nil {
+		commonctl.SendError(ctx, err)
+	} else {
+		commonctl.SendRespOfPost(ctx, data)
+	}
+}

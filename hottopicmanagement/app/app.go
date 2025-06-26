@@ -11,6 +11,7 @@ import (
 
 type AppService interface {
 	ToReview(string, CmdToUploadOptionalTopics) error
+	GenReport(string) ([]byte, error)
 }
 
 func NewAppService(
