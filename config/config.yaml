@@ -23,3 +23,8 @@ hot_topic_management:
       collections:
         hot_topic: opengauss_hot_topic
         not_hot_topic: opengauss_not_hot_topic
+
+    - community: mindspore
+      collections:
+        hot_topic: mindspore_hot_topic
+        not_hot_topic: mindspore_not_hot_topic
