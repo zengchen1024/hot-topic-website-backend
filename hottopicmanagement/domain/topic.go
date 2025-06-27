@@ -13,6 +13,10 @@ type StatusLog struct {
 	Time   string
 }
 
+func (s *StatusLog) resolved() bool {
+	return s.Status == "Resolved"
+}
+
 // HotTopic
 type HotTopic struct {
 	Id                string
@@ -45,6 +49,26 @@ func (ht *HotTopic) GetDSSet() map[int]bool {
 	}
 
 	return v
+}
+
+func (ht *HotTopic) IsResolved() bool {
+	for i := len(ht.StatusTransferLog) - 1; i >= 0; i-- {
+		if ht.StatusTransferLog[i].resolved() {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (ht *HotTopic) GetDiscussionSource(dsId int) *DiscussionSource {
+	for i := range ht.DiscussionSources {
+		if item := &ht.DiscussionSources[i]; item.Id == dsId {
+			return item
+		}
+	}
+
+	return nil
 }
 
 // DiscussionSourceInfo

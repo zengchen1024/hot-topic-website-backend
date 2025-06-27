@@ -68,3 +68,25 @@ func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) 
 
 	return v, nil
 }
+
+func (impl *hotTopic) Find(community, topicId string) (topic domain.HotTopic, err error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return
+	}
+
+	filter, err := dao.DocIdFilter(topicId)
+	if err != nil {
+		return
+	}
+
+	var do hotTopicDO
+
+	if err = dao.GetDoc(filter, nil, nil, &do); err != nil {
+		return
+	}
+
+	topic = do.toHotTopic()
+
+	return
+}

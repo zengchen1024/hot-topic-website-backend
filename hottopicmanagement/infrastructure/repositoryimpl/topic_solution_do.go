@@ -25,7 +25,7 @@ func totopicSolutionsDO(Community string, v []domain.TopicSolution) topicSolutio
 // topicSolutionDO
 type topicSolutionsDO struct {
 	Id             primitive.ObjectID `bson:"_id"           json:"-"`
-	Community      string             `bson:"community"        json:"community"`
+	Community      string             `bson:"community"     json:"community"`
 	CreatedAt      int64              `bson:"created_at"    json:"created_at"`
 	TopicSolutions []topicSolutionDO  `bson:"topics"        json:"topics"`
 }
@@ -46,6 +46,7 @@ func (do *topicSolutionsDO) toTopicSolutions() repository.TopicSolutions {
 
 	return repository.TopicSolutions{
 		Id:             do.index(),
+		Community:      do.Community,
 		TopicSolutions: r,
 	}
 }

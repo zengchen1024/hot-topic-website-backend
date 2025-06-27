@@ -4,6 +4,7 @@ import "github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/d
 
 type TopicSolutions struct {
 	Id             string
+	Community      string
 	TopicSolutions []domain.TopicSolution
 }
 
