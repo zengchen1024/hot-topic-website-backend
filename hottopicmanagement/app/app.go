@@ -11,17 +11,21 @@ import (
 
 type AppService interface {
 	ToReview(string, CmdToUploadOptionalTopics) error
+	GenReport(string) ([]byte, error)
+	GetLastWeekTopicAndDiscuss(string) ([]byte, error)
 }
 
 func NewAppService(
 	config *Config,
 	repoHotTopic repository.RepoHotTopic,
 	repoNotHotTopic repository.RepoNotHotTopic,
+	repoTopicReport repository.RepoTopicReport,
 ) *appService {
 	return &appService{
 		filePath:        config.FilePath,
 		repoHotTopic:    repoHotTopic,
 		repoNotHotTopic: repoNotHotTopic,
+		repoTopicReport: repoTopicReport,
 	}
 }
 
@@ -29,6 +33,7 @@ type appService struct {
 	filePath        string
 	repoHotTopic    repository.RepoHotTopic
 	repoNotHotTopic repository.RepoNotHotTopic
+	repoTopicReport repository.RepoTopicReport
 }
 
 func (s *appService) reviewFile(community string) string {

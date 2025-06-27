@@ -1,6 +1,8 @@
 package repositoryimpl
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	commonRepo "github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
@@ -41,6 +43,26 @@ func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	return err
 }
 
+func (impl *hotTopic) UpdateTopic(community string, v *domain.HotTopic) error {
+	do := tohotTopicDO(v)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+
+	docFilter := bson.M{fieldId: v.Id}
+
+	dao, err := impl.dao(community)
+	if err != nil {
+		return err
+	}
+
+	version := time.Now().Day()
+	err = dao.UpdateDoc(docFilter, doc, version)
+
+	return err
+}
+
 func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) {
 	dao, err := impl.dao(community)
 	if err != nil {
@@ -67,4 +89,23 @@ func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) 
 	}
 
 	return v, nil
+}
+
+func (impl *hotTopic) FindOneWithId(community string, topic_id string) (topic domain.HotTopic, err error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return topic, err
+	}
+
+	filter := bson.M{fieldId: topic_id}
+
+	sort := bson.M{
+		fieldOrder: 1,
+	}
+
+	if err := dao.GetDoc(filter, nil, sort, &topic); err != nil {
+		return topic, err
+	}
+
+	return topic, nil
 }

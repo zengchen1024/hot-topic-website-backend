@@ -13,6 +13,7 @@ const (
 	fieldVersion   = "version"
 	fieldClosedAt  = "closed_at"
 	fieldCreatedAt = "created_at"
+	fieldId        = "id"
 )
 
 func tohotTopicDO(v *domain.HotTopic) hotTopicDO {
