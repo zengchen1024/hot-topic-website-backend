@@ -14,7 +14,8 @@ func (cmd CmdToAddTopicSolution) Validate() error {
 	for i := range cmd {
 		items := cmd[i].DiscussionSources
 		for i := range items {
-			if items[i].resolvedNum() != 1 {
+			resolved, unresolved := items[i].filterout()
+			if len(unresolved) != 0 && len(resolved) != 1 {
 				return errors.New("resolved num is not 1")
 			}
 		}
