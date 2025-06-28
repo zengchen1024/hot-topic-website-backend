@@ -39,16 +39,17 @@ func (s *topicSolutionAppService) Add(community string, cmd CmdToAddTopicSolutio
 
 	for i := range cmd {
 		items := cmd[i].DiscussionSources
+
 		solutions := make([]domain.DiscussionSourceSolution, 0, len(items))
-		for i := range items {
-			resolved, unresolved := items[i].filterout()
+		for j := range items {
+			resolved, unresolved := items[j].filterout()
 			if len(unresolved) == 0 {
 				continue
 			}
 
 			relatedOnes := make([]int, len(unresolved))
-			for j := range unresolved {
-				relatedOnes[j] = unresolved[j].Id
+			for k := range unresolved {
+				relatedOnes[k] = unresolved[k].Id
 			}
 
 			solutions = append(solutions, domain.DiscussionSourceSolution{

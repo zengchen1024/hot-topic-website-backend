@@ -1,6 +1,6 @@
 package app
 
-import "errors"
+import "fmt"
 
 type CmdToAddTopicSolution []OptionalTopic
 
@@ -12,11 +12,16 @@ func (cmd CmdToAddTopicSolution) init() {
 
 func (cmd CmdToAddTopicSolution) Validate() error {
 	for i := range cmd {
-		items := cmd[i].DiscussionSources
-		for i := range items {
-			resolved, unresolved := items[i].filterout()
+		topic := &cmd[i]
+		items := topic.DiscussionSources
+
+		for j := range items {
+			resolved, unresolved := items[j].filterout()
 			if len(unresolved) != 0 && len(resolved) != 1 {
-				return errors.New("resolved num is not 1")
+				return fmt.Errorf(
+					"resolved num is not 1, topic:%s, resolved id:%d",
+					topic.Title, resolved[0].Id,
+				)
 			}
 		}
 	}
