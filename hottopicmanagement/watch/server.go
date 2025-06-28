@@ -12,12 +12,14 @@ var impl *watchingImpl
 
 func Start(
 	cfg *Config,
+	ht repository.RepoHotTopic,
 	repo repository.RepoTopicSolution,
 ) {
 	impl = &watchingImpl{
 		repo:     repo,
 		stop:     make(chan struct{}),
 		stopped:  make(chan struct{}),
+		handler:  newtopicSolutionHandler(ht, cfg),
 		interval: cfg.intervalDuration(),
 	}
 
@@ -36,7 +38,9 @@ func Stop() {
 
 // watchingImpl
 type watchingImpl struct {
-	repo     repository.RepoTopicSolution
+	handler *topicSolutionHandler
+	repo    repository.RepoTopicSolution
+
 	stop     chan struct{}
 	stopped  chan struct{}
 	interval time.Duration
@@ -97,5 +101,5 @@ func (impl *watchingImpl) watch() {
 }
 
 func (impl *watchingImpl) handle(solution *repository.TopicSolutions, needStop func() bool) {
-
+	impl.handler.handle(solution, needStop)
 }

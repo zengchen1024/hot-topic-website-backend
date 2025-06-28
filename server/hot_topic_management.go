@@ -27,15 +27,17 @@ func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 		nhm[item.Community] = mongodb.DAO(item.Collections.NotHotTopic)
 	}
 
+	services.repoHotTopic = repositoryimpl.NewHotTopic(hm)
+	services.repoTopicSolution = repositoryimpl.NewTopicSolution(mongodb.DAO(htCfg.Repo.TopicSolution))
+
 	services.hottopicmanagementApp = app.NewAppService(
 		&htCfg.App,
-		repositoryimpl.NewHotTopic(hm),
+		services.repoHotTopic,
 		repositoryimpl.NewNotHotTopic(nhm),
 	)
 
 	services.topicSolutionApp = app.NewTopicSolutionAppService(
-		repositoryimpl.NewTopicSolution(mongodb.DAO(htCfg.Repo.TopicSolution)),
-		repositoryimpl.NewHotTopic(hm),
+		services.repoTopicSolution, services.repoHotTopic,
 	)
 
 	return nil

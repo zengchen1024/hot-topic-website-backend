@@ -2,24 +2,55 @@ package watch
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watch/forum"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watch/gitcodeissue"
 )
 
+const commentKey = "的信息可能对你解决本问题有所帮助，请参考，谢谢！"
+
 type platformClient interface {
-	countCommentedSolutons(sourceId string) (int, error)
-	addSolution(sourceId string, solution *domain.DiscussionSource) error
+	CountCommentedSolutons(ds *domain.DiscussionSource, key string) (int, error)
+	AddSolution(ds *domain.DiscussionSource, comment string) error
+}
+
+func genSolutionComment(solution *domain.DiscussionSource) string {
+	return fmt.Sprintf("你好！这个[连接](%s)%s", solution.URL, commentKey)
+}
+
+func newClients(cfg *Config) clients {
+	cli := clients{}
+
+	for i := range cfg.Forums {
+		item := cfg.Forums[i]
+
+		cli[cli.key(item.Community, item.typeDesc())] = forum.NewClient(&item.Detail)
+	}
+
+	for i := range cfg.GitCodes {
+		item := cfg.GitCodes[i]
+
+		cli[cli.key(item.Community, item.typeDesc())] = gitcodeissue.NewClient(&item.Detail)
+	}
+
+	return cli
 }
 
 // key is {community}_{discussion source type}
 type clients map[string]platformClient
 
+func (cli clients) key(community, t string) string {
+	return strings.ToLower(fmt.Sprintf("%s_%s", community, t))
+}
+
 func (cli clients) get(community string, ds *domain.DiscussionSource) (platformClient, error) {
-	v := cli[fmt.Sprintf("%s_%s", community, ds.Type)]
+	v := cli[cli.key(community, ds.Type)]
 	if v == nil {
 		return nil, fmt.Errorf("no client for %s and %s", community, ds.Type)
 	}
@@ -87,7 +118,7 @@ func (c doneCache) get(cli platformClient, community string, ds *domain.Discussi
 		return counter, nil
 	}
 
-	n, err := cli.countCommentedSolutons(ds.SourceId)
+	n, err := cli.CountCommentedSolutons(ds, commentKey)
 	if err != nil {
 		return nil, err
 	}
@@ -98,11 +129,19 @@ func (c doneCache) get(cli platformClient, community string, ds *domain.Discussi
 	return &v, nil
 }
 
+func newtopicSolutionHandler(repo repository.RepoHotTopic, cfg *Config) *topicSolutionHandler {
+	return &topicSolutionHandler{
+		repo:    repo,
+		cache:   doneCache{},
+		clients: newClients(cfg),
+	}
+}
+
 // topicSolutionHandler
 type topicSolutionHandler struct {
 	repo    repository.RepoHotTopic
-	clients clients
 	cache   doneCache
+	clients clients
 }
 
 func (h *topicSolutionHandler) handle(solution *repository.TopicSolutions, needStop func() bool) {
@@ -192,7 +231,7 @@ func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 		return nil
 	}
 
-	if err = cli.addSolution(ds.SourceId, resolvedOne); err != nil {
+	if err = cli.AddSolution(ds, genSolutionComment(resolvedOne)); err != nil {
 		return err
 	}
 

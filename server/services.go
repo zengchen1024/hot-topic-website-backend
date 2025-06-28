@@ -8,11 +8,15 @@ package server
 import (
 	"github.com/opensourceways/hot-topic-website-backend/config"
 	hottopicmanagementapp "github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/app"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 )
 
 type allServices struct {
 	topicSolutionApp      hottopicmanagementapp.TopicSolutionAppService
 	hottopicmanagementApp hottopicmanagementapp.AppService
+
+	repoHotTopic      repository.RepoHotTopic
+	repoTopicSolution repository.RepoTopicSolution
 }
 
 func initServices(cfg *config.Config) (services allServices, err error) {
