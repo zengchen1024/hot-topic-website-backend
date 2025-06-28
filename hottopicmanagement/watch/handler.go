@@ -235,6 +235,8 @@ func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 		return err
 	}
 
+	logrus.Debugf("add solution: %s to %s", resolvedOne.URL, ds.URL)
+
 	counter.add()
 
 	return nil
