@@ -28,3 +28,18 @@ hot_topic_management:
       collections:
         hot_topic: mindspore_hot_topic
         not_hot_topic: mindspore_not_hot_topic
+
+  watch:
+    forums:
+    - community: openubmc
+      detail:
+        user: "discobot"
+        api_key: ""
+        endpoint: "https://discuss.openubmc.cn"
+
+ 
+    gitcodes:
+    - community: openubmc
+      detail:
+        token: ""
+ 
