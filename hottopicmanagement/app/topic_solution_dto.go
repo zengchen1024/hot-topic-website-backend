@@ -19,8 +19,8 @@ func (cmd CmdToAddTopicSolution) Validate() error {
 			resolved, unresolved := items[j].filterout()
 			if len(unresolved) != 0 && len(resolved) != 1 {
 				return fmt.Errorf(
-					"resolved num is not 1, topic:%s, resolved id:%d",
-					topic.Title, resolved[0].Id,
+					"resolved num is not 1, topic:%s, resolved num:%d",
+					topic.Title, len(resolved),
 				)
 			}
 		}

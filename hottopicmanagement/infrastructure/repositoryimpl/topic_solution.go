@@ -36,7 +36,7 @@ func (impl *topicSolution) FindOldest() (repository.TopicSolutions, error) {
 
 	var do topicSolutionsDO
 
-	if err := impl.dao.GetDoc(nil, nil, sort, &do); err != nil {
+	if err := impl.dao.GetDoc(bson.M{}, nil, sort, &do); err != nil {
 		return repository.TopicSolutions{}, err
 	}
 
