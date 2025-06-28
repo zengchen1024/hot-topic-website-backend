@@ -43,7 +43,7 @@ func (s *topicSolutionAppService) Add(community string, cmd CmdToAddTopicSolutio
 		solutions := make([]domain.DiscussionSourceSolution, 0, len(items))
 		for j := range items {
 			resolved, unresolved := items[j].filterout()
-			if len(unresolved) == 0 {
+			if len(resolved) == 0 || len(unresolved) == 0 {
 				continue
 			}
 
