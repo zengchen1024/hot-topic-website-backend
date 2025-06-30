@@ -173,7 +173,9 @@ type topicSolutionHandler struct {
 	clients clients
 }
 
-func (h *topicSolutionHandler) handle(solution *repository.TopicSolutions, needStop func() bool) {
+func (h *topicSolutionHandler) handle(
+	solution *repository.TopicSolutions, needStop func() bool,
+) (retry []domain.TopicSolution) {
 	for i := range solution.TopicSolutions {
 		if needStop() {
 			return
@@ -188,17 +190,25 @@ func (h *topicSolutionHandler) handle(solution *repository.TopicSolutions, needS
 			continue
 		}
 
-		h.handleTopicSolution(solution.Community, &topic, ts.Solutions, needStop)
+		toRetry := h.handleTopicSolution(solution.Community, &topic, ts.Solutions, needStop)
+		if len(toRetry) > 0 {
+			retry = append(retry, domain.TopicSolution{
+				TopicId:   ts.TopicId,
+				Solutions: toRetry,
+			})
+		}
 	}
 
 	h.cache.refresh()
+
+	return
 }
 
 func (h *topicSolutionHandler) handleTopicSolution(
 	community string, topic *domain.HotTopic,
 	solutions []domain.DiscussionSourceSolution,
 	needStop func() bool,
-) {
+) (retry []domain.DiscussionSourceSolution) {
 	for i := range solutions {
 		if needStop() {
 			return
@@ -211,24 +221,38 @@ func (h *topicSolutionHandler) handleTopicSolution(
 			continue
 		}
 
+		toRetry := []int{}
 		for _, dsId := range item.RelatedOnes {
 			ds := h.getDiscussionSource(topic, dsId)
 			if ds == nil {
 				continue
 			}
 
-			if err := h.handleDiscussionSourceSolution(community, resolvedOne, ds); err != nil {
+			if b, err := h.handleDiscussionSourceSolution(community, resolvedOne, ds); err != nil {
 				logrus.Errorf(
 					"handle solution(%s) for discussion source() failed, err:%s",
 					resolvedOne.URL, ds.URL, err.Error(),
 				)
+				// can retry
+				if b {
+					toRetry = append(toRetry, dsId)
+				}
 			}
 
 			if needStop() {
 				return
 			}
 		}
+
+		if len(toRetry) > 0 {
+			retry = append(retry, domain.DiscussionSourceSolution{
+				ResolvedOne: item.ResolvedOne,
+				RelatedOnes: toRetry,
+			})
+		}
 	}
+
+	return
 }
 
 func (h *topicSolutionHandler) getDiscussionSource(topic *domain.HotTopic, dsId int) *domain.DiscussionSource {
@@ -245,28 +269,28 @@ func (h *topicSolutionHandler) getDiscussionSource(topic *domain.HotTopic, dsId 
 
 func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 	community string, resolvedOne, ds *domain.DiscussionSource,
-) error {
+) (bool, error) {
 	cli, err := h.clients.get(community, ds)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	counter, err := h.cache.get(cli, community, ds)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	if !counter.canDo(resolvedOne.URL) {
-		return nil
+		return false, nil
 	}
 
 	if err = cli.AddSolution(ds, genSolutionComment(resolvedOne)); err != nil {
-		return err
+		return true, err
 	}
 
 	logrus.Debugf("add solution: %s to %s", resolvedOne.URL, ds.URL)
 
 	counter.add(resolvedOne.URL)
 
-	return nil
+	return false, nil
 }

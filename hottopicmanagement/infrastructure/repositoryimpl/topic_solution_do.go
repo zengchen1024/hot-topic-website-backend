@@ -9,13 +9,14 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
-func totopicSolutionsDO(Community string, v []domain.TopicSolution) topicSolutionsDO {
+func totopicSolutionsDO(Community string, retryNum int, v []domain.TopicSolution) topicSolutionsDO {
 	r := make([]topicSolutionDO, len(v))
 	for i := range v {
 		r[i] = totopicSolutionDO(&v[i])
 	}
 
 	return topicSolutionsDO{
+		RetryNum:       retryNum,
 		Community:      Community,
 		CreatedAt:      utils.Now(),
 		TopicSolutions: r,
@@ -25,6 +26,7 @@ func totopicSolutionsDO(Community string, v []domain.TopicSolution) topicSolutio
 // topicSolutionDO
 type topicSolutionsDO struct {
 	Id             primitive.ObjectID `bson:"_id"           json:"-"`
+	RetryNum       int                `bson:"retry_num"     json:"retry_num"`
 	Community      string             `bson:"community"     json:"community"`
 	CreatedAt      int64              `bson:"created_at"    json:"created_at"`
 	TopicSolutions []topicSolutionDO  `bson:"topics"        json:"topics"`

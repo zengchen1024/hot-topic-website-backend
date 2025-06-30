@@ -101,5 +101,33 @@ func (impl *watchingImpl) watch() {
 }
 
 func (impl *watchingImpl) handle(solution *repository.TopicSolutions, needStop func() bool) {
-	impl.handler.handle(solution, needStop)
+	retry := impl.handler.handle(solution, needStop)
+	solution.RetryNum++
+
+	if len(retry) == 0 || solution.RetryNum >= 3 {
+		var err error
+		for i := 0; i < 3; i++ {
+			if err = impl.repo.Remove(solution.Id); err == nil {
+				return
+			}
+		}
+
+		if err != nil {
+			logrus.Errorf("delete solution:%s failed, err:%s", solution.Id, err.Error())
+		}
+	}
+
+	solution.TopicSolutions = retry
+
+	var err error
+	for i := 0; i < 3; i++ {
+		if err = impl.repo.Save(solution); err == nil {
+			return
+		}
+	}
+
+	if err != nil {
+		logrus.Errorf("save solution:%s failed, err:%s", solution.Id, err.Error())
+	}
+
 }

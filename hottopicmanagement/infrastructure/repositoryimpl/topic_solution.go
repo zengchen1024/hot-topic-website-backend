@@ -18,7 +18,7 @@ type topicSolution struct {
 }
 
 func (impl *topicSolution) Add(community string, v []domain.TopicSolution) error {
-	do := totopicSolutionsDO(community, v)
+	do := totopicSolutionsDO(community, 0, v)
 	doc, err := do.toDoc()
 	if err != nil {
 		return err
@@ -50,4 +50,21 @@ func (impl *topicSolution) Remove(tsId string) error {
 	}
 
 	return impl.dao.DeleteDoc(filter)
+}
+
+func (impl *topicSolution) Save(solution *repository.TopicSolutions) error {
+	do := totopicSolutionsDO(solution.Community, solution.RetryNum, solution.TopicSolutions)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+
+	filter, err := impl.dao.DocIdFilter(solution.Id)
+	if err != nil {
+		return err
+	}
+
+	_, err = impl.dao.ReplaceDoc(filter, doc)
+
+	return err
 }
