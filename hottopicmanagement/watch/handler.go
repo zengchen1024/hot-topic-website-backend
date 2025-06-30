@@ -2,6 +2,7 @@ package watch
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,15 +14,29 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watch/gitcodeissue"
 )
 
-const commentKey = "的信息可能对你解决本问题有所帮助，请参考，谢谢！"
+const (
+	commentTemp    = `你好！这个[连接](%s)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
+	commentTempURL = `你好！这个\[连接\]\((.*)\)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
+)
 
-type platformClient interface {
-	CountCommentedSolutons(ds *domain.DiscussionSource, key string) (int, error)
-	AddSolution(ds *domain.DiscussionSource, comment string) error
-}
+var urlRegex = regexp.MustCompile(commentTempURL)
 
 func genSolutionComment(solution *domain.DiscussionSource) string {
-	return fmt.Sprintf("你好！这个[连接](%s)%s", solution.URL, commentKey)
+	return fmt.Sprintf(commentTemp, solution.URL)
+}
+
+func parseSolutionComment(comment string) string {
+	matches := urlRegex.FindStringSubmatch(comment)
+	if len(matches) < 2 {
+		return ""
+	}
+
+	return matches[1]
+}
+
+type platformClient interface {
+	CountCommentedSolutons(*domain.DiscussionSource, func(string) string) ([]string, error)
+	AddSolution(ds *domain.DiscussionSource, comment string) error
 }
 
 func newClients(cfg *Config) clients {
@@ -60,17 +75,31 @@ func (cli clients) get(community string, ds *domain.DiscussionSource) (platformC
 
 // doneCounter
 type doneCounter struct {
-	num       int
+	urls      []string
 	expiredAt int64
 }
 
-func (c *doneCounter) add() {
-	c.num++
+func (c *doneCounter) add(v string) {
+	c.urls = append(c.urls, v)
 	c.setExpired()
 }
 
-func (c *doneCounter) canDo() bool {
-	return c.num < 3
+func (c *doneCounter) isTooMany() bool {
+	return len(c.urls) >= 3
+}
+
+func (c *doneCounter) canDo(v string) bool {
+	if c.isTooMany() {
+		return false
+	}
+
+	for i := range c.urls {
+		if c.urls[i] == v {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (c *doneCounter) isExpired(now int64) bool {
@@ -78,13 +107,13 @@ func (c *doneCounter) isExpired(now int64) bool {
 }
 
 func (c *doneCounter) setExpired() {
-	if !c.canDo() {
+	if c.isTooMany() {
 		c.expiredAt = expiry(24 * 5)
 	}
 }
 
-func newdoneCounter(num int) doneCounter {
-	v := doneCounter{num: num}
+func newdoneCounter(urls []string) doneCounter {
+	v := doneCounter{urls: urls}
 	v.setExpired()
 
 	return v
@@ -118,12 +147,12 @@ func (c doneCache) get(cli platformClient, community string, ds *domain.Discussi
 		return counter, nil
 	}
 
-	n, err := cli.CountCommentedSolutons(ds, commentKey)
+	urls, err := cli.CountCommentedSolutons(ds, parseSolutionComment)
 	if err != nil {
 		return nil, err
 	}
 
-	v := newdoneCounter(n)
+	v := newdoneCounter(urls)
 	c[k] = &v
 
 	return &v, nil
@@ -227,7 +256,7 @@ func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 		return err
 	}
 
-	if !counter.canDo() {
+	if !counter.canDo(resolvedOne.URL) {
 		return nil
 	}
 
@@ -237,7 +266,7 @@ func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 
 	logrus.Debugf("add solution: %s to %s", resolvedOne.URL, ds.URL)
 
-	counter.add()
+	counter.add(resolvedOne.URL)
 
 	return nil
 }

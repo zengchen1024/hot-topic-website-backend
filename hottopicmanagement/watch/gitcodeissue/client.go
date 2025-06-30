@@ -45,19 +45,21 @@ func parseIssue(ds *domain.DiscussionSource) (issueInfo, error) {
 	}, nil
 }
 
-func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource, key string) (int, error) {
+func (impl *clientImpl) CountCommentedSolutons(
+	ds *domain.DiscussionSource, parseSolutionComment func(string) string,
+) ([]string, error) {
 	issue, err := parseIssue(ds)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	n := 0
+	urls := []string{}
 	for page := 1; ; page++ {
 		items, ok, err := impl.cli.Issues.ListIssueComments(
 			context.Background(), issue.owner, issue.repo, issue.num, strconv.Itoa(page), "", "",
 		)
 		if err != nil {
-			return 0, err
+			return nil, err
 		}
 
 		if !ok || len(items) == 0 {
@@ -65,14 +67,13 @@ func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource, key 
 		}
 
 		for i := range items {
-			if strings.Contains(*items[i].Body, key) {
-				n++
+			if v := parseSolutionComment(*items[i].Body); v != "" {
+				urls = append(urls, v)
 			}
 		}
 	}
 
-	return n, nil
-
+	return urls, nil
 }
 
 func (impl *clientImpl) AddSolution(ds *domain.DiscussionSource, comment string) error {

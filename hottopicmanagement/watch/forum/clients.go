@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
@@ -23,15 +22,17 @@ type responseOfGettingPost struct {
 	} `json:"post_stream"`
 }
 
-func (resp *responseOfGettingPost) count(key string) (n int) {
+func (resp *responseOfGettingPost) parse(parseSolutionComment func(string) string) []string {
+	urls := []string{}
+
 	items := resp.PostStream.Posts
 	for i := range items {
-		if strings.Contains(items[i].Cooked, key) {
-			n++
+		if v := parseSolutionComment(items[i].Cooked); v != "" {
+			urls = append(urls, v)
 		}
 	}
 
-	return
+	return urls
 }
 
 type Config struct {
@@ -58,22 +59,24 @@ type clientImpl struct {
 	addCommentURL string
 }
 
-func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource, key string) (int, error) {
+func (impl *clientImpl) CountCommentedSolutons(
+	ds *domain.DiscussionSource, parseSolutionComment func(string) string,
+) ([]string, error) {
 	req, err := http.NewRequest(
 		http.MethodGet, fmt.Sprintf("%s%s.json", impl.getPostURL, ds.SourceId), nil,
 	)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	impl.setHeaderForReq(req)
 
 	resp := responseOfGettingPost{}
 	if _, err := impl.cli.ForwardTo(req, &resp); err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return resp.count(key), nil
+	return resp.parse(parseSolutionComment), nil
 }
 
 func (impl *clientImpl) AddSolution(ds *domain.DiscussionSource, comment string) error {
