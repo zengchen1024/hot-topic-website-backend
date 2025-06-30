@@ -81,12 +81,12 @@ func (cli clients) get(community string, ds *domain.DiscussionSource) (platformC
 
 // doneCounter
 type doneCounter struct {
-	urls      []string
+	urls      map[string]bool
 	expiredAt int64
 }
 
 func (c *doneCounter) add(v string) {
-	c.urls = append(c.urls, v)
+	c.urls[v] = true
 	c.setExpired()
 }
 
@@ -99,13 +99,7 @@ func (c *doneCounter) canDo(v string) bool {
 		return false
 	}
 
-	for i := range c.urls {
-		if c.urls[i] == v {
-			return false
-		}
-	}
-
-	return true
+	return !c.urls[v]
 }
 
 func (c *doneCounter) isExpired(now int64) bool {
@@ -119,7 +113,11 @@ func (c *doneCounter) setExpired() {
 }
 
 func newdoneCounter(urls []string) doneCounter {
-	v := doneCounter{urls: urls}
+	m := map[string]bool{}
+	for _, url := range urls {
+		m[url] = true
+	}
+	v := doneCounter{urls: m}
 	v.setExpired()
 
 	return v
