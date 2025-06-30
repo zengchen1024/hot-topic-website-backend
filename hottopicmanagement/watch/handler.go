@@ -38,6 +38,7 @@ func (s solutionComment) ParseURL(comment string) string {
 }
 
 type platformClient interface {
+	SholdIgnore(ds *domain.DiscussionSource) (bool, error)
 	CountCommentedSolutons(*domain.DiscussionSource) ([]string, error)
 	AddSolution(ds *domain.DiscussionSource, comment string) error
 }
@@ -278,6 +279,14 @@ func (h *topicSolutionHandler) handleDiscussionSourceSolution(
 	cli, err := h.clients.get(community, ds)
 	if err != nil {
 		return false, err
+	}
+
+	b, err := cli.SholdIgnore(ds)
+	if err != nil {
+		return true, err
+	}
+	if b {
+		return false, nil
 	}
 
 	counter, err := h.cache.get(cli, community, ds)

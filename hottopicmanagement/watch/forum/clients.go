@@ -20,6 +20,17 @@ type responseOfGettingPost struct {
 			Cooked string `json:"cooked"`
 		} `json:"posts"`
 	} `json:"post_stream"`
+	Tags []string `json:"tags"`
+}
+
+func (resp *responseOfGettingPost) hasTag(tags map[string]bool) bool {
+	for _, v := range resp.Tags {
+		if tags[v] {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (resp *responseOfGettingPost) parse(sc solutionComment) []string {
@@ -36,9 +47,11 @@ func (resp *responseOfGettingPost) parse(sc solutionComment) []string {
 }
 
 type Config struct {
-	User     string `json:"user"     required:"true"`
-	ApiKey   string `json:"api_key"  required:"true"`
-	Endpoint string `json:"endpoint" required:"true"`
+	// Tags means only the post which has at least one of the tags can be handled
+	Tags     []string `json:"tags"     required:"true"`
+	User     string   `json:"user"     required:"true"`
+	ApiKey   string   `json:"api_key"  required:"true"`
+	Endpoint string   `json:"endpoint" required:"true"`
 }
 
 type solutionComment interface {
@@ -46,10 +59,16 @@ type solutionComment interface {
 }
 
 func NewClient(cfg *Config, sc solutionComment) *clientImpl {
+	tags := map[string]bool{}
+	for _, v := range cfg.Tags {
+		tags[v] = true
+	}
+
 	return &clientImpl{
 		cli:             NewHttpClient(3),
 		solutionComment: sc,
 
+		Tags:          tags,
 		user:          cfg.User,
 		apiKey:        cfg.ApiKey,
 		getPostURL:    fmt.Sprintf("%s/t/", cfg.Endpoint),
@@ -61,28 +80,44 @@ type clientImpl struct {
 	cli HttpClient
 	solutionComment
 
+	Tags          map[string]bool
 	user          string
 	apiKey        string
 	getPostURL    string
 	addCommentURL string
 }
 
+func (impl *clientImpl) SholdIgnore(ds *domain.DiscussionSource) (bool, error) {
+	post, err := impl.getPost(ds)
+	if err != nil {
+		return false, err
+	}
+
+	return !post.hasTag(impl.Tags), nil
+}
+
 func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource) ([]string, error) {
-	req, err := http.NewRequest(
-		http.MethodGet, fmt.Sprintf("%s%s.json", impl.getPostURL, ds.SourceId), nil,
-	)
+	post, err := impl.getPost(ds)
 	if err != nil {
 		return nil, err
 	}
 
-	impl.setHeaderForReq(req)
+	return post.parse(impl.solutionComment), nil
+}
 
-	resp := responseOfGettingPost{}
-	if _, err := impl.cli.ForwardTo(req, &resp); err != nil {
-		return nil, err
+func (impl *clientImpl) getPost(ds *domain.DiscussionSource) (post responseOfGettingPost, err error) {
+	req, err := http.NewRequest(
+		http.MethodGet, fmt.Sprintf("%s%s.json", impl.getPostURL, ds.SourceId), nil,
+	)
+	if err != nil {
+		return
 	}
 
-	return resp.parse(impl.solutionComment), nil
+	impl.setHeaderForReq(req)
+
+	_, err = impl.cli.ForwardTo(req, &post)
+
+	return
 }
 
 func (impl *clientImpl) AddSolution(ds *domain.DiscussionSource, comment string) error {

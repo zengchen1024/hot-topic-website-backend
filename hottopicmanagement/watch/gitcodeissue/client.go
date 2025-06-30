@@ -51,6 +51,10 @@ func parseIssue(ds *domain.DiscussionSource) (issueInfo, error) {
 	}, nil
 }
 
+func (impl *clientImpl) SholdIgnore(ds *domain.DiscussionSource) (bool, error) {
+	return false, nil
+}
+
 func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource) ([]string, error) {
 	issue, err := parseIssue(ds)
 	if err != nil {
