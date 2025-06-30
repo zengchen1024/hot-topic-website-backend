@@ -1,0 +1,29 @@
+{
+    "_id": "685d14be2cd21bf7988a5429",
+    "title": "BMC开发者Ubuntu WSL2构建QEMU版本权限不足，如何调整文件系统权限及shared目录配置？",
+    "closed_at": "0",
+    "logs": [
+        {
+            "time": "2025-06-18",
+            "status": "Appended"
+        }
+    ],
+    "order": "4",
+    "source": [
+        {
+            "id": "116",
+            "url": "https://gitee.com/ascend/triton-ascend/issues/ICCL9N",
+            "type": "issue",
+            "source_id": "20742827",
+            "closed_at": "2025-06-04T17:21:28+08:00"
+        },
+        {
+            "id": "1302",
+            "url": "https://discuss.openubmc.cn/t/topic/1302/1",
+            "type": "forum",
+            "source_id": "4551",
+            "closed_at": "2025-06-09T10:12:44+08:00"
+        }
+    ],
+    "version": "0"
+}

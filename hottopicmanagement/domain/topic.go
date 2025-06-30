@@ -15,12 +15,12 @@ type StatusLog struct {
 
 // HotTopic
 type HotTopic struct {
-	Id                string
-	Title             string
-	Order             int
-	DiscussionSources []DiscussionSource
-	StatusTransferLog []StatusLog
-	Version           int
+	Id                string             `json:id`
+	Title             string             `json:title`
+	Order             int                `json:order`
+	DiscussionSources []DiscussionSource `json:discussion`
+	StatusTransferLog []StatusLog        `json:transferlog`
+	Version           int                `json:version`
 }
 
 // TopicReport
@@ -30,7 +30,7 @@ type TopicTopN struct {
 }
 type TopicReport struct {
 	Year int         `json:"year" bson:"year"`
-	Week int         `json:"week" bson:"year"`
+	Week int         `json:"week" bson:"week"`
 	Cnt  int         `json:"cnt" bson:"cnt"`
 	TopN []TopicTopN `json:"topn" bson:"topn"`
 }
