@@ -33,6 +33,8 @@ hot_topic_management:
     forums:
     - community: openubmc
       detail:
+        tags:
+        - "提问求助"
         user: "discobot"
         api_key: ""
         endpoint: "https://discuss.openubmc.cn"

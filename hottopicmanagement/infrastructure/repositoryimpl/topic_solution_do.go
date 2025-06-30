@@ -48,6 +48,7 @@ func (do *topicSolutionsDO) toTopicSolutions() repository.TopicSolutions {
 
 	return repository.TopicSolutions{
 		Id:             do.index(),
+		RetryNum:       do.RetryNum,
 		Community:      do.Community,
 		TopicSolutions: r,
 	}
