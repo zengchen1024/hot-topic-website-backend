@@ -15,18 +15,21 @@ import (
 )
 
 const (
-	commentTemp    = `你好！这个[连接](%s)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
-	commentTempURL = `你好！这个\[连接\]\((.*)\)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
+	commentTemp = `你好！这个[连接](%s)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
+	gitURL      = `你好！这个\[连接\]\((.*)\)的信息可能对你解决本问题有所帮助，请参考，谢谢！`
+	formURL     = `<p>你好！这个<a href="(.*)">连接</a>的信息可能对你解决本问题有所帮助，请参考，谢谢！</p>`
 )
-
-var urlRegex = regexp.MustCompile(commentTempURL)
 
 func genSolutionComment(solution *domain.DiscussionSource) string {
 	return fmt.Sprintf(commentTemp, solution.URL)
 }
 
-func parseSolutionComment(comment string) string {
-	matches := urlRegex.FindStringSubmatch(comment)
+type solutionComment struct {
+	reg *regexp.Regexp
+}
+
+func (s solutionComment) ParseURL(comment string) string {
+	matches := s.reg.FindStringSubmatch(comment)
 	if len(matches) < 2 {
 		return ""
 	}
@@ -35,23 +38,25 @@ func parseSolutionComment(comment string) string {
 }
 
 type platformClient interface {
-	CountCommentedSolutons(*domain.DiscussionSource, func(string) string) ([]string, error)
+	CountCommentedSolutons(*domain.DiscussionSource) ([]string, error)
 	AddSolution(ds *domain.DiscussionSource, comment string) error
 }
 
 func newClients(cfg *Config) clients {
 	cli := clients{}
 
+	sc := solutionComment{regexp.MustCompile(formURL)}
 	for i := range cfg.Forums {
 		item := cfg.Forums[i]
 
-		cli[cli.key(item.Community, item.typeDesc())] = forum.NewClient(&item.Detail)
+		cli[cli.key(item.Community, item.typeDesc())] = forum.NewClient(&item.Detail, sc)
 	}
 
+	sc = solutionComment{regexp.MustCompile(gitURL)}
 	for i := range cfg.GitCodes {
 		item := cfg.GitCodes[i]
 
-		cli[cli.key(item.Community, item.typeDesc())] = gitcodeissue.NewClient(&item.Detail)
+		cli[cli.key(item.Community, item.typeDesc())] = gitcodeissue.NewClient(&item.Detail, sc)
 	}
 
 	return cli
@@ -147,7 +152,7 @@ func (c doneCache) get(cli platformClient, community string, ds *domain.Discussi
 		return counter, nil
 	}
 
-	urls, err := cli.CountCommentedSolutons(ds, parseSolutionComment)
+	urls, err := cli.CountCommentedSolutons(ds)
 	if err != nil {
 		return nil, err
 	}

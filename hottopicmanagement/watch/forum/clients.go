@@ -22,12 +22,12 @@ type responseOfGettingPost struct {
 	} `json:"post_stream"`
 }
 
-func (resp *responseOfGettingPost) parse(parseSolutionComment func(string) string) []string {
+func (resp *responseOfGettingPost) parse(sc solutionComment) []string {
 	urls := []string{}
 
 	items := resp.PostStream.Posts
 	for i := range items {
-		if v := parseSolutionComment(items[i].Cooked); v != "" {
+		if v := sc.ParseURL(items[i].Cooked); v != "" {
 			urls = append(urls, v)
 		}
 	}
@@ -41,9 +41,15 @@ type Config struct {
 	Endpoint string `json:"endpoint" required:"true"`
 }
 
-func NewClient(cfg *Config) *clientImpl {
+type solutionComment interface {
+	ParseURL(comment string) string
+}
+
+func NewClient(cfg *Config, sc solutionComment) *clientImpl {
 	return &clientImpl{
-		cli:           NewHttpClient(3),
+		cli:             NewHttpClient(3),
+		solutionComment: sc,
+
 		user:          cfg.User,
 		apiKey:        cfg.ApiKey,
 		getPostURL:    fmt.Sprintf("%s/t/", cfg.Endpoint),
@@ -52,16 +58,16 @@ func NewClient(cfg *Config) *clientImpl {
 }
 
 type clientImpl struct {
-	cli           HttpClient
+	cli HttpClient
+	solutionComment
+
 	user          string
 	apiKey        string
 	getPostURL    string
 	addCommentURL string
 }
 
-func (impl *clientImpl) CountCommentedSolutons(
-	ds *domain.DiscussionSource, parseSolutionComment func(string) string,
-) ([]string, error) {
+func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource) ([]string, error) {
 	req, err := http.NewRequest(
 		http.MethodGet, fmt.Sprintf("%s%s.json", impl.getPostURL, ds.SourceId), nil,
 	)
@@ -76,7 +82,7 @@ func (impl *clientImpl) CountCommentedSolutons(
 		return nil, err
 	}
 
-	return resp.parse(parseSolutionComment), nil
+	return resp.parse(impl.solutionComment), nil
 }
 
 func (impl *clientImpl) AddSolution(ds *domain.DiscussionSource, comment string) error {

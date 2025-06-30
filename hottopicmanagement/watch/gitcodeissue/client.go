@@ -15,14 +15,20 @@ type Config struct {
 	Token string `json:"token"`
 }
 
-func NewClient(cfg *Config) *clientImpl {
+type solutionComment interface {
+	ParseURL(comment string) string
+}
+
+func NewClient(cfg *Config, sc solutionComment) *clientImpl {
 	return &clientImpl{
-		cli: openapi.NewAPIClientWithAuthorization([]byte(cfg.Token)),
+		cli:             openapi.NewAPIClientWithAuthorization([]byte(cfg.Token)),
+		solutionComment: sc,
 	}
 }
 
 type clientImpl struct {
 	cli *openapi.APIClient
+	solutionComment
 }
 
 type issueInfo struct {
@@ -45,9 +51,7 @@ func parseIssue(ds *domain.DiscussionSource) (issueInfo, error) {
 	}, nil
 }
 
-func (impl *clientImpl) CountCommentedSolutons(
-	ds *domain.DiscussionSource, parseSolutionComment func(string) string,
-) ([]string, error) {
+func (impl *clientImpl) CountCommentedSolutons(ds *domain.DiscussionSource) ([]string, error) {
 	issue, err := parseIssue(ds)
 	if err != nil {
 		return nil, err
@@ -67,7 +71,7 @@ func (impl *clientImpl) CountCommentedSolutons(
 		}
 
 		for i := range items {
-			if v := parseSolutionComment(*items[i].Body); v != "" {
+			if v := impl.ParseURL(*items[i].Body); v != "" {
 				urls = append(urls, v)
 			}
 		}
