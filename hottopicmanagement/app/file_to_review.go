@@ -329,7 +329,7 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, oldTopic *domain.Hot
 				Closed:           item.Closed,
 			}
 
-			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
+			err = ftr.saveOneDS(&ds, row, sheet, item.Appended, ftr.appendedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -393,7 +393,7 @@ func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, shee
 				Closed:           item.Closed,
 			}
 
-			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
+			err = ftr.saveOneDS(&ds, row, sheet, item.Appended, ftr.appendedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -512,6 +512,7 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 			}
 		}
 
+		newSets = topic.getDSSet()
 		for _, i := range oldIds {
 			item := &oldTopics[i]
 
@@ -520,7 +521,7 @@ func (ftr *fileToReview) saveTopicThatIntersectWithMultiOlds(topic *OptionalTopi
 				return
 			}
 
-			common := getIntersection(item.GetDSSet(), topic.getDSSet())
+			common := getIntersection(item.GetDSSet(), newSets)
 			if err = ftr.saveIntersectedDS(topic, common, row2, false); err != nil {
 				return
 			}

@@ -12,3 +12,10 @@ type RepoNotHotTopic interface {
 	Add(string, *domain.NotHotTopic) error
 	FindAll(string) ([]domain.NotHotTopic, error)
 }
+
+type RepoTopicsToReview interface {
+	Add(string, *domain.TopicsToReview) error
+	Find(string) (domain.TopicsToReview, error)
+	SaveSelected(string, *domain.TopicsToReview) error
+	FindSelected(string) (domain.TopicsToReview, error)
+}

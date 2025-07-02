@@ -1,6 +1,8 @@
 package app
 
 import (
+	"errors"
+
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
@@ -42,7 +44,7 @@ func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
 	h := 0
 	t := len(v) - 1
 	for i := range infos {
-		if item := &infos[i]; item.appended {
+		if item := &infos[i]; item.Appended {
 			v[h] = item
 			h++
 		} else {
@@ -87,7 +89,7 @@ func (ot *OptionalTopic) updateAppended(dsIdsOfOldTopic map[int]bool) {
 		item := ot.discussionSources[i]
 
 		if _, ok := dsIdsOfOldTopic[item.Id]; !ok {
-			item.appended = true
+			item.Appended = true
 		}
 	}
 }
@@ -97,7 +99,7 @@ func (ot *OptionalTopic) sort() []*DiscussionSourceInfo {
 	h := 0
 	t := len(v) - 1
 	for i := range ot.discussionSources {
-		if item := ot.discussionSources[i]; item.appended {
+		if item := ot.discussionSources[i]; item.Appended {
 			v[h] = item
 			h++
 		} else {
@@ -119,12 +121,60 @@ func (ot *OptionalTopic) getDSSet() map[int]bool {
 	return v
 }
 
+func (ot *OptionalTopic) toTopicToReview() (t domain.TopicToReview) {
+	t.Title = ot.Title
+
+	v := make([]domain.DiscussionSourceToReview, 0, ot.total)
+	for i := range ot.DiscussionSources {
+		v = append(v, ot.DiscussionSources[i]...)
+	}
+
+	return
+}
+
 // DiscussionSourceInfo
-type DiscussionSourceInfo struct {
-	Title  string `json:"title"          required:"true"`
-	Closed bool   `json:"source_closed"  required:"true"`
+type DiscussionSourceInfo = domain.DiscussionSourceToReview
 
-	domain.DiscussionSource
+type TopicsToReviewDTO = domain.TopicsToReview
 
-	appended bool // if true, it is newly appended to the old hot topic
+type CmdToUpdateSelected struct {
+	Community string                 `json:"community" required:"true"`
+	Selected  []domain.TopicToReview `json:"selected"`
+}
+
+func (cmd *CmdToUpdateSelected) Validate() error {
+	if err := cmd.checkDuplicateDS(); err != nil {
+		return err
+	}
+
+	return cmd.checkDuplicateTopic()
+}
+
+func (cmd *CmdToUpdateSelected) checkDuplicateTopic() error {
+	m := make(map[string]bool, len(cmd.Selected))
+	for i := range cmd.Selected {
+		t := cmd.Selected[i].Title
+		if m[t] {
+			return errors.New("there are duplicate topics")
+		}
+		m[t] = true
+	}
+
+	return nil
+}
+
+func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
+	m := make(map[int]bool, len(cmd.Selected))
+	for i := range cmd.Selected {
+		items := cmd.Selected[i].DiscussionSources
+		for j := range items {
+			v := items[j].Id
+			if m[v] {
+				return errors.New("there are duplicate discussion sources")
+			}
+			m[v] = true
+		}
+	}
+
+	return nil
 }

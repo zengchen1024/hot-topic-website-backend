@@ -52,7 +52,7 @@ func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
 		return
 	}
 
-	if err := ctl.appService.ToReview(ctx.Param("community"), cmd); err != nil {
+	if err := ctl.appService.NewReviews(ctx.Param("community"), cmd); err != nil {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfPost(ctx, nil)

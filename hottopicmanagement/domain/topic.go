@@ -1,11 +1,22 @@
 package domain
 
+import (
+	"fmt"
+
+	"github.com/opensourceways/hot-topic-website-backend/utils"
+)
+
 type DiscussionSource struct {
-	Id        int    `json:"id"           required:"true"`
-	URL       string `json:"url"          required:"true"`
-	Type      string `json:"source_type"  required:"true"`
-	SourceId  string `json:"source_id"    required:"true"`
-	CreatedAt string `json:"created_at"   required:"true"`
+	Id         int    `json:"id"           required:"true"`
+	URL        string `json:"url"          required:"true"`
+	Type       string `json:"source_type"  required:"true"`
+	SourceId   string `json:"source_id"    required:"true"`
+	CreatedAt  string `json:"created_at"   required:"true"`
+	ImportDate string
+}
+
+func (ds *DiscussionSource) isOldOne() bool {
+	return ds.ImportDate != ""
 }
 
 type StatusLog struct {
@@ -17,14 +28,35 @@ func (s *StatusLog) resolved() bool {
 	return s.Status == "Resolved"
 }
 
+type TransferLog struct {
+	StatusLog
+	Order int    // the topic is ordered on the report of that week
+	Date  string // the date that the report of that week is created
+}
+
 // HotTopic
 type HotTopic struct {
 	Id                string
 	Title             string
 	Order             int
+	TransferLogs      []TransferLog
 	DiscussionSources []DiscussionSource
-	StatusTransferLog []StatusLog
+	StatusTransferLog []StatusLog //TODO: delete
 	Version           int
+}
+
+func (ht *HotTopic) CheckIfIsAGoodReview(t *TopicToReview) error {
+	m := t.GetDSSet()
+
+	for i := range ht.DiscussionSources {
+		if v := ht.DiscussionSources[i].Id; !m[v] {
+			return fmt.Errorf(
+				"missing discussion source(%d) for the reviewing topic(%s)", v, t.Title,
+			)
+		}
+	}
+
+	return nil
 }
 
 func NewHotTopic(title string, order int, sources []DiscussionSource, createdAt string) HotTopic {
@@ -32,10 +64,14 @@ func NewHotTopic(title string, order int, sources []DiscussionSource, createdAt 
 		Title:             title,
 		Order:             order,
 		DiscussionSources: sources,
-		StatusTransferLog: []StatusLog{
+		TransferLogs: []TransferLog{
 			{
-				Time:   createdAt,
-				Status: "New",
+				StatusLog: StatusLog{
+					Time:   createdAt,
+					Status: "New",
+				},
+				Order: order,
+				Date:  utils.Date(),
 			},
 		},
 	}

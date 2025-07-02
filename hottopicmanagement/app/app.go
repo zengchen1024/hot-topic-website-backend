@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 type AppService interface {
-	ToReview(string, CmdToUploadOptionalTopics) error
+	NewReviews(string, CmdToUploadOptionalTopics) error
 }
 
 func NewAppService(
@@ -26,16 +27,17 @@ func NewAppService(
 }
 
 type appService struct {
-	filePath        string
-	repoHotTopic    repository.RepoHotTopic
-	repoNotHotTopic repository.RepoNotHotTopic
+	filePath           string
+	repoHotTopic       repository.RepoHotTopic
+	repoNotHotTopic    repository.RepoNotHotTopic
+	repoTopicsToReview repository.RepoTopicsToReview
 }
 
 func (s *appService) reviewFile(community string) string {
 	return filepath.Join(s.filePath, fmt.Sprintf("%s_%s.xlsx", community, utils.Date()))
 }
 
-func (s *appService) ToReview(community string, cmd CmdToUploadOptionalTopics) error {
+func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics) error {
 	cmd.init()
 
 	file, err := newfileToReview(s.reviewFile(community))
@@ -43,12 +45,14 @@ func (s *appService) ToReview(community string, cmd CmdToUploadOptionalTopics) e
 		return fmt.Errorf("new excel failed, err:%s", err.Error())
 	}
 
-	newOnes, err := s.handleOldTopics(community, cmd, file)
+	toReview := domain.TopicsToReview{}
+
+	newOnes, err := s.handleOldTopics(community, cmd, file, &toReview)
 	if err != nil {
 		return err
 	}
 
-	if err := s.handleNewOptionalTopics(community, newOnes, file); err != nil {
+	if err := s.handleNewOptionalTopics(community, newOnes, file, &toReview); err != nil {
 		return err
 	}
 
@@ -56,12 +60,14 @@ func (s *appService) ToReview(community string, cmd CmdToUploadOptionalTopics) e
 		return err
 	}
 
-	// TODO send email
-
-	return nil
+	return s.repoTopicsToReview.Add(community, &toReview)
 }
 
-func (s *appService) handleOldTopics(community string, cmd CmdToUploadOptionalTopics, file *fileToReview) ([]*OptionalTopic, error) {
+func (s *appService) handleOldTopics(
+	community string, cmd CmdToUploadOptionalTopics, file *fileToReview, tr *domain.TopicsToReview,
+) (
+	[]*OptionalTopic, error,
+) {
 	oldTopics, err := s.repoHotTopic.FindOpenOnes(community)
 	if err != nil {
 		return nil, err
@@ -97,17 +103,27 @@ func (s *appService) handleOldTopics(community string, cmd CmdToUploadOptionalTo
 	}
 
 	if n := len(oldTopics); len(oldOnes) != n {
-		return nil, fmt.Errorf("the count of old topics is not matched, expect :%d, actual:%d", n, len(oldOnes))
+		return nil, fmt.Errorf(
+			"the count of old topics is not matched, expect :%d, actual:%d", n, len(oldOnes),
+		)
 	}
 
 	if err := file.saveLastHotTopics(oldTopics, oldOnes); err != nil {
 		return nil, err
 	}
 
+	selected, err := s.toSelected(oldTopics, oldOnes)
+	if err != nil {
+		return nil, err
+	}
+	tr.SetSelected(sheetLastTopics, selected)
+
 	return newOnes, nil
 }
 
-func (s *appService) handleNewOptionalTopics(community string, newOnes []*OptionalTopic, file *fileToReview) error {
+func (s *appService) handleNewOptionalTopics(
+	community string, newOnes []*OptionalTopic, file *fileToReview, candidate *domain.TopicsToReview,
+) error {
 	if len(newOnes) == 0 {
 		return errors.New("no new topics")
 	}
@@ -121,6 +137,11 @@ func (s *appService) handleNewOptionalTopics(community string, newOnes []*Option
 			if err := file.saveNewTopic(newOnes[i]); err != nil {
 				return err
 			}
+		}
+
+		for i := range newOnes {
+			v := newOnes[i].toTopicToReview()
+			candidate.AddCandidate(sheetNewTopics, &v)
 		}
 
 		return nil
@@ -141,10 +162,14 @@ func (s *appService) handleNewOptionalTopics(community string, newOnes []*Option
 	for i, v := range new2old {
 		n := len(v)
 
+		cv := newOnes[i].toTopicToReview()
+
 		if n == 0 {
 			if err := file.saveNewTopic(newOnes[i]); err != nil {
 				return err
 			}
+
+			candidate.AddCandidate(sheetNewTopics, &cv)
 
 			continue
 		}
@@ -159,7 +184,12 @@ func (s *appService) handleNewOptionalTopics(community string, newOnes []*Option
 					return err
 				}
 
+				candidate.AddCandidate(sheetUnchangedTopics, &cv)
+
 			case setsRelationLeftIncludesRight:
+				// must run before file.saveTopicThatAppendToOld to avoid setting Appended
+				candidate.AddCandidate(sheetAppendToOld, &cv)
+
 				if err := file.saveTopicThatAppendToOld(newOnes[i], os); err != nil {
 					return err
 				}
@@ -173,6 +203,8 @@ func (s *appService) handleNewOptionalTopics(community string, newOnes []*Option
 				if err := file.saveTopicThatIntersectWithMultiOlds(newOnes[i], v, oldTopics); err != nil {
 					return err
 				}
+
+				candidate.AddCandidate(sheetMultiIntersects, &cv)
 			}
 
 			continue
@@ -181,6 +213,9 @@ func (s *appService) handleNewOptionalTopics(community string, newOnes []*Option
 		if err := file.saveTopicThatIntersectWithMultiOlds(newOnes[i], v, oldTopics); err != nil {
 			return err
 		}
+
+		candidate.AddCandidate(sheetMultiIntersects, &cv)
+
 	}
 
 	for j, v := range old2new {
