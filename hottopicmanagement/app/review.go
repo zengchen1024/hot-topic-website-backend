@@ -46,11 +46,11 @@ func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) 
 	return s.repoTopicsToReview.SaveSelected(community, &t)
 }
 
-func (s *appService) GetTopicsToPublish(community string) ([]domain.TopicToReview, error) {
+func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, error) {
 	v, err := s.repoTopicsToReview.FindSelected(community)
 	if err != nil {
-		return nil, err
+		return TopicsToPublishDTO{}, err
 	}
 
-	return v.Selected, nil
+	return TopicsToPublishDTO{v.Selected}, nil
 }

@@ -200,3 +200,7 @@ func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
 
 	return nil
 }
+
+type TopicsToPublishDTO struct {
+	Topics []domain.TopicToReview `json:"topics"`
+}

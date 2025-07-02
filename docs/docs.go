@@ -15,6 +15,40 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/hot-topic/{community}": {
+            "get": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "get topic to publish",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "HotTopic"
+                ],
+                "summary": "Get",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.TopicsToPublishDTO"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/hot-topic/{community}/solution": {
             "post": {
                 "security": [
@@ -29,7 +63,7 @@ const docTemplate = `{
                 "tags": [
                     "HotTopic"
                 ],
-                "summary": "ToReview",
+                "summary": "Add",
                 "parameters": [
                     {
                         "type": "string",
@@ -218,6 +252,17 @@ const docTemplate = `{
                 },
                 "summary": {
                     "type": "string"
+                }
+            }
+        },
+        "app.TopicsToPublishDTO": {
+            "type": "object",
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.TopicToReview"
+                    }
                 }
             }
         },

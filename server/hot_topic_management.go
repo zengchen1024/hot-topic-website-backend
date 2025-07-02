@@ -52,8 +52,9 @@ func setInternalRouterForTopicReview(rg *gin.RouterGroup, services *allServices)
 }
 
 func setInternalRouterForTopicSolution(rg *gin.RouterGroup, services *allServices) {
-	controller.AddInternalRouterForTopicSolutionController(
+	controller.AddInternalRouterForHotTopicController(
 		rg,
 		services.topicSolutionApp,
+		services.hottopicmanagementApp,
 	)
 }

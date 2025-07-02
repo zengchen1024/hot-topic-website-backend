@@ -12,22 +12,27 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/app"
 )
 
-func AddInternalRouterForTopicSolutionController(
+func AddInternalRouterForHotTopicController(
 	r *gin.RouterGroup,
 	s app.TopicSolutionAppService,
+	s1 app.AppService,
+
 ) {
-	ctl := TopicSolutionController{
-		appService: s,
+	ctl := HotTopicController{
+		appService:    s,
+		reviewService: s1,
 	}
 
 	r.POST("/v1/hot-topic/:community/solution", ctl.Add)
+	r.GET("/v1/hot-topic/:community", ctl.Get)
 }
 
-type TopicSolutionController struct {
-	appService app.TopicSolutionAppService
+type HotTopicController struct {
+	appService    app.TopicSolutionAppService
+	reviewService app.AppService
 }
 
-// @Summary      ToReview
+// @Summary      Add
 // @Description  add topic solution
 // @Tags         HotTopic
 // @Param        community   path    string             true    "lowercase community name, like openubmc, cann"
@@ -36,7 +41,7 @@ type TopicSolutionController struct {
 // @Security     Internal
 // @Success      201    {object}    commonctl.ResponseData{}
 // @Router       /v1/hot-topic/{community}/solution [post]
-func (ctl *TopicSolutionController) Add(ctx *gin.Context) {
+func (ctl *HotTopicController) Add(ctx *gin.Context) {
 	req := reqToAddSolution{}
 
 	if err := ctx.BindJSON(&req); err != nil {
@@ -56,5 +61,21 @@ func (ctl *TopicSolutionController) Add(ctx *gin.Context) {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfPost(ctx, nil)
+	}
+}
+
+// @Summary      Get
+// @Description  get topic to publish
+// @Tags         HotTopic
+// @Param        community   path    string             true    "lowercase community name, like openubmc, cann"
+// @Accept       json
+// @Security     Internal
+// @Success      200    {object}    app.TopicsToPublishDTO{}
+// @Router       /v1/hot-topic/{community} [get]
+func (ctl *HotTopicController) Get(ctx *gin.Context) {
+	if v, err := ctl.reviewService.GetTopicsToPublish(ctx.Param("community")); err != nil {
+		commonctl.SendError(ctx, err)
+	} else {
+		commonctl.SendRespOfGet(ctx, v)
 	}
 }

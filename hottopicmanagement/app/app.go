@@ -14,6 +14,7 @@ type AppService interface {
 	NewReviews(string, CmdToUploadOptionalTopics) error
 	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
 	UpdateSelected(string, *CmdToUpdateSelected) error
+	GetTopicsToPublish(community string) (TopicsToPublishDTO, error)
 }
 
 func NewAppService(

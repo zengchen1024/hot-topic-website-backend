@@ -27,6 +27,13 @@ definitions:
       summary:
         type: string
     type: object
+  app.TopicsToPublishDTO:
+    properties:
+      topics:
+        items:
+          $ref: '#/definitions/domain.TopicToReview'
+        type: array
+    type: object
   app.TopicsToReviewDTO:
     properties:
       cadidates:
@@ -106,6 +113,27 @@ definitions:
 info:
   contact: {}
 paths:
+  /v1/hot-topic/{community}:
+    get:
+      consumes:
+      - application/json
+      description: get topic to publish
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.TopicsToPublishDTO'
+      security:
+      - Internal: []
+      summary: Get
+      tags:
+      - HotTopic
   /v1/hot-topic/{community}/solution:
     post:
       consumes:
@@ -130,7 +158,7 @@ paths:
             $ref: '#/definitions/controller.ResponseData'
       security:
       - Internal: []
-      summary: ToReview
+      summary: Add
       tags:
       - HotTopic
   /v1/hot-topic/{community}/to-review:
