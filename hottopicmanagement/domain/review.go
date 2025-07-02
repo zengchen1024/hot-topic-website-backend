@@ -14,7 +14,7 @@ type DiscussionSourceToReview struct {
 type TopicToReview struct {
 	Order             int                        `json:"order"`
 	Title             string                     `json:"title"`
-	Category          string                     `json:"-"`
+	Category          string                     `json:"category"`
 	Resolved          bool                       `json:"resolved"`
 	DiscussionSources []DiscussionSourceToReview `json:"dss"`
 }
