@@ -12,17 +12,21 @@ import (
 
 type AppService interface {
 	NewReviews(string, CmdToUploadOptionalTopics) error
+	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
+	UpdateSelected(string, *CmdToUpdateSelected) error
 }
 
 func NewAppService(
 	config *Config,
 	repoHotTopic repository.RepoHotTopic,
 	repoNotHotTopic repository.RepoNotHotTopic,
+	repoTopicsToReview repository.RepoTopicsToReview,
 ) *appService {
 	return &appService{
-		filePath:        config.FilePath,
-		repoHotTopic:    repoHotTopic,
-		repoNotHotTopic: repoNotHotTopic,
+		filePath:           config.FilePath,
+		repoHotTopic:       repoHotTopic,
+		repoNotHotTopic:    repoNotHotTopic,
+		repoTopicsToReview: repoTopicsToReview,
 	}
 }
 

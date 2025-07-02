@@ -32,3 +32,5 @@ func (req *reqToAddSolution) toCmd() (app.CmdToAddTopicSolution, error) {
 
 	return cmd, err
 }
+
+type reqToUpdateSelected = app.CmdToUpdateSelected

@@ -70,9 +70,9 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "HotTopic"
+                    "TopicReview"
                 ],
-                "summary": "ToReview",
+                "summary": "Create",
                 "parameters": [
                     {
                         "type": "string",
@@ -94,6 +94,81 @@ const docTemplate = `{
                 "responses": {
                     "201": {
                         "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/topic-review/{community}": {
+            "get": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "get topic review info",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TopicReview"
+                ],
+                "summary": "Get",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.TopicsToReviewDTO"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "update the selected topics",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TopicReview"
+                ],
+                "summary": "Update",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.reqToUpdateSelected"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Accepted",
                         "schema": {
                             "$ref": "#/definitions/controller.ResponseData"
                         }
@@ -146,6 +221,26 @@ const docTemplate = `{
                 }
             }
         },
+        "app.TopicsToReviewDTO": {
+            "type": "object",
+            "properties": {
+                "cadidates": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/domain.TopicToReview"
+                        }
+                    }
+                },
+                "selected": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.TopicToReview"
+                    }
+                }
+            }
+        },
         "controller.ResponseData": {
             "type": "object",
             "properties": {
@@ -177,6 +272,66 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/app.OptionalTopic"
                     }
+                }
+            }
+        },
+        "controller.reqToUpdateSelected": {
+            "type": "object",
+            "properties": {
+                "selected": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.TopicToReview"
+                    }
+                }
+            }
+        },
+        "domain.DiscussionSourceToReview": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imported_at": {
+                    "type": "string"
+                },
+                "source_closed": {
+                    "type": "boolean"
+                },
+                "source_id": {
+                    "type": "string"
+                },
+                "source_type": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.TopicToReview": {
+            "type": "object",
+            "properties": {
+                "dss": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.DiscussionSourceToReview"
+                    }
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "resolved": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string"
                 }
             }
         }

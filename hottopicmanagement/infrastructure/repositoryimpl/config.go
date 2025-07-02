@@ -1,6 +1,7 @@
 package repositoryimpl
 
 type Config struct {
+	TopicReview          string                 `json:"topic_review"           required:"true"`
 	TopicSolution        string                 `json:"topic_solution"         required:"true"`
 	CommunityCollections []CommunityCollections `json:"Community_collections"`
 }

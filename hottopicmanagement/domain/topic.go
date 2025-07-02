@@ -6,17 +6,22 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
+type DiscussionSourceMeta struct {
+	Id        int    `json:"id"           required:"true"`
+	URL       string `json:"url"          required:"true"`
+	Type      string `json:"source_type"  required:"true"`
+	SourceId  string `json:"source_id"    required:"true"`
+	CreatedAt string `json:"created_at"   required:"true"`
+}
+
 type DiscussionSource struct {
-	Id         int    `json:"id"           required:"true"`
-	URL        string `json:"url"          required:"true"`
-	Type       string `json:"source_type"  required:"true"`
-	SourceId   string `json:"source_id"    required:"true"`
-	CreatedAt  string `json:"created_at"   required:"true"`
-	ImportDate string
+	DiscussionSourceMeta
+
+	ImportedAt string `json:"imported_at"`
 }
 
 func (ds *DiscussionSource) isOldOne() bool {
-	return ds.ImportDate != ""
+	return ds.ImportedAt != ""
 }
 
 type StatusLog struct {
@@ -45,16 +50,22 @@ type HotTopic struct {
 	Version           int
 }
 
-func (ht *HotTopic) CheckIfIsAGoodReview(t *TopicToReview) error {
-	m := t.GetDSSet()
+func (ht *HotTopic) InitReview(t *TopicToReview) error {
+	m := t.getDSMap()
 
 	for i := range ht.DiscussionSources {
-		if v := ht.DiscussionSources[i].Id; !m[v] {
+		item := ht.DiscussionSources[i]
+
+		v, ok := m[item.Id]
+		if !ok {
 			return fmt.Errorf(
 				"missing discussion source(%d) for the reviewing topic(%s)", v, t.Title,
 			)
 		}
+		v.ImportedAt = item.ImportedAt
 	}
+
+	t.Order = ht.Order
 
 	return nil
 }

@@ -19,7 +19,7 @@ func (s *appService) toSelected(
 
 		r[i] = item.toTopicToReview()
 
-		if err := old.CheckIfIsAGoodReview(&r[i]); err != nil {
+		if err := old.InitReview(&r[i]); err != nil {
 			return nil, err
 		}
 	}
@@ -31,8 +31,8 @@ func (s *appService) GetTopicsToReview(community string) (TopicsToReviewDTO, err
 	return s.repoTopicsToReview.Find(community)
 }
 
-func (s *appService) UpdateSelected(cmd *CmdToUpdateSelected) error {
-	t, err := s.repoTopicsToReview.FindSelected(cmd.Community)
+func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) error {
+	t, err := s.repoTopicsToReview.FindSelected(community)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (s *appService) UpdateSelected(cmd *CmdToUpdateSelected) error {
 
 	// TODO check if all the discussion sources are valid, for example there are from Data Clean
 
-	return s.repoTopicsToReview.SaveSelected(cmd.Community, &t)
+	return s.repoTopicsToReview.SaveSelected(community, &t)
 }
 
 func (s *appService) GetTopicsToPublish(community string) ([]domain.TopicToReview, error) {

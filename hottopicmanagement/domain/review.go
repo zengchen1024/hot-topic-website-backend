@@ -4,11 +4,8 @@ import "errors"
 
 // DiscussionSourceToReview
 type DiscussionSourceToReview struct {
-	Title  string `json:"title"          required:"true"`
-	Closed bool   `json:"source_closed"  required:"true"`
-
-	// if true, it is newly appended to the old hot topic
-	Appended bool `json:"appended"`
+	Title  string `json:"title"`
+	Closed bool   `json:"source_closed"`
 
 	DiscussionSource
 }
@@ -17,7 +14,7 @@ type DiscussionSourceToReview struct {
 type TopicToReview struct {
 	Order             int                        `json:"order"`
 	Title             string                     `json:"title"`
-	Category          string                     `json:"category"`
+	Category          string                     `json:"-"`
 	Resolved          bool                       `json:"resolved"`
 	DiscussionSources []DiscussionSourceToReview `json:"dss"`
 }
@@ -27,6 +24,17 @@ func (t *TopicToReview) GetDSSet() map[int]bool {
 
 	for i := range t.DiscussionSources {
 		v[t.DiscussionSources[i].Id] = true
+	}
+
+	return v
+}
+
+func (t *TopicToReview) getDSMap() map[int]*DiscussionSourceToReview {
+	v := make(map[int]*DiscussionSourceToReview, len(t.DiscussionSources))
+
+	for i := range t.DiscussionSources {
+		item := &t.DiscussionSources[i]
+		v[item.Id] = item
 	}
 
 	return v
@@ -67,7 +75,7 @@ func (t *TopicToReview) checkIfOldDSMissing(t1 *TopicToReview) error {
 type TopicsToReview struct {
 	Candidates map[string][]TopicToReview `json:"cadidates"`
 	Selected   []TopicToReview            `json:"selected"`
-	Version    int
+	Version    int                        `json:"-"`
 }
 
 func (t *TopicsToReview) CandidatesNum() int {

@@ -72,6 +72,20 @@ func SendRespOfPost(ctx *gin.Context, data interface{}) {
 	}
 }
 
+// SendRespOfPut sends a successful PUT response with data if provided.
+func SendRespOfPut(ctx *gin.Context, data interface{}) {
+	if data == nil {
+		ctx.JSON(http.StatusAccepted, newResponseCodeMsg("", "success"))
+	} else {
+		ctx.JSON(http.StatusAccepted, newResponseData(data))
+	}
+}
+
+// SendRespOfGet sends a successful GET response with data.
+func SendRespOfGet(ctx *gin.Context, data interface{}) {
+	ctx.JSON(http.StatusOK, newResponseData(data))
+}
+
 // SendError sends an error response based on the given error.
 func SendError(ctx *gin.Context, err error) {
 	sc, code := httpError(err)

@@ -97,30 +97,35 @@ func (do *hotTopicDO) toStatusLogs() []domain.StatusLog {
 
 // discussionSourceDO
 type discussionSourceDO struct {
-	Id        int    `bson:"id"           json:"id"`
-	URL       string `bson:"url"          json:"url"`
-	Type      string `bson:"type"         json:"type"`
-	SourceId  string `bson:"source_id"    json:"source_id"`
-	CreatedAt string `bson:"created_at"   json:"created_at"`
+	Id         int    `bson:"id"           json:"id"`
+	URL        string `bson:"url"          json:"url"`
+	Type       string `bson:"type"         json:"type"`
+	SourceId   string `bson:"source_id"    json:"source_id"`
+	CreatedAt  string `bson:"created_at"   json:"created_at"`
+	ImportedAt string `bson:"imported_at"  json:"imported_at"`
 }
 
 func (do *discussionSourceDO) toDiscussionSource() domain.DiscussionSource {
 	return domain.DiscussionSource{
-		Id:        do.Id,
-		URL:       do.URL,
-		Type:      do.Type,
-		SourceId:  do.SourceId,
-		CreatedAt: do.CreatedAt,
+		DiscussionSourceMeta: domain.DiscussionSourceMeta{
+			Id:        do.Id,
+			URL:       do.URL,
+			Type:      do.Type,
+			SourceId:  do.SourceId,
+			CreatedAt: do.CreatedAt,
+		},
+		ImportedAt: do.ImportedAt,
 	}
 }
 
 func todiscussionSourceDO(v *domain.DiscussionSource) discussionSourceDO {
 	return discussionSourceDO{
-		Id:        v.Id,
-		URL:       v.URL,
-		Type:      v.Type,
-		SourceId:  v.SourceId,
-		CreatedAt: v.CreatedAt,
+		Id:         v.Id,
+		URL:        v.URL,
+		Type:       v.Type,
+		SourceId:   v.SourceId,
+		CreatedAt:  v.CreatedAt,
+		ImportedAt: v.ImportedAt,
 	}
 }
 

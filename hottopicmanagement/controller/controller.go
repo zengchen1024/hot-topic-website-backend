@@ -12,31 +12,33 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/app"
 )
 
-func AddInternalRouterForHotTopicController(
+func AddInternalRouterForTopicReviewController(
 	r *gin.RouterGroup,
 	s app.AppService,
 ) {
-	ctl := HotTopicController{
+	ctl := TopicReviewController{
 		appService: s,
 	}
 
-	r.POST("/v1/hot-topic/:community/to-review", ctl.ToReview)
+	r.POST("/v1/hot-topic/:community/to-review", ctl.Create)
+	r.GET("/v1/topic-review/:community", ctl.Get)
+	r.PUT("/v1/topic-review/:community", ctl.Update)
 }
 
-type HotTopicController struct {
+type TopicReviewController struct {
 	appService app.AppService
 }
 
-// @Summary      ToReview
+// @Summary      Create
 // @Description  upload topics to review
-// @Tags         HotTopic
+// @Tags         TopicReview
 // @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
 // @Param        body        body    reqToReview   true    "body"
 // @Accept       json
 // @Security     Internal
 // @Success      201    {object}    commonctl.ResponseData{}
 // @Router       /v1/hot-topic/{community}/to-review [post]
-func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
+func (ctl *TopicReviewController) Create(ctx *gin.Context) {
 	req := reqToReview{}
 
 	if err := ctx.BindJSON(&req); err != nil {
@@ -56,5 +58,52 @@ func (ctl *HotTopicController) ToReview(ctx *gin.Context) {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfPost(ctx, nil)
+	}
+}
+
+// @Summary      Get
+// @Description  get topic review info
+// @Tags         TopicReview
+// @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
+// @Accept       json
+// @Security     Internal
+// @Success      200    {object}    app.TopicsToReviewDTO{}
+// @Router       /v1/topic-review/{community} [get]
+func (ctl *TopicReviewController) Get(ctx *gin.Context) {
+	if v, err := ctl.appService.GetTopicsToReview(ctx.Param("community")); err != nil {
+		commonctl.SendError(ctx, err)
+	} else {
+		commonctl.SendRespOfGet(ctx, v)
+	}
+}
+
+// @Summary      Update
+// @Description  update the selected topics
+// @Tags         TopicReview
+// @Param        community   path    string                true    "lowercase community name, like openubmc, cann"
+// @Param        body        body    reqToUpdateSelected   true    "body"
+// @Accept       json
+// @Security     Internal
+// @Success      202    {object}    commonctl.ResponseData{}
+// @Router       /v1/topic-review/{community} [put]
+func (ctl *TopicReviewController) Update(ctx *gin.Context) {
+	req := reqToUpdateSelected{}
+
+	if err := ctx.BindJSON(&req); err != nil {
+		commonctl.SendBadRequestBody(ctx, err)
+
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		commonctl.SendBadRequestBody(ctx, err)
+
+		return
+	}
+
+	if err := ctl.appService.UpdateSelected(ctx.Param("community"), &req); err != nil {
+		commonctl.SendError(ctx, err)
+	} else {
+		commonctl.SendRespOfPut(ctx, nil)
 	}
 }

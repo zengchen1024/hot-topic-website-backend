@@ -34,6 +34,7 @@ func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 		&htCfg.App,
 		services.repoHotTopic,
 		repositoryimpl.NewNotHotTopic(nhm),
+		repositoryimpl.NewTopicToReview(mongodb.DAO(htCfg.Repo.TopicReview)),
 	)
 
 	services.topicSolutionApp = app.NewTopicSolutionAppService(
@@ -43,8 +44,8 @@ func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 	return nil
 }
 
-func setInternalRouterForHotTopicManagement(rg *gin.RouterGroup, services *allServices) {
-	controller.AddInternalRouterForHotTopicController(
+func setInternalRouterForTopicReview(rg *gin.RouterGroup, services *allServices) {
+	controller.AddInternalRouterForTopicReviewController(
 		rg,
 		services.hottopicmanagementApp,
 	)

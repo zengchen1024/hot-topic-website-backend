@@ -27,6 +27,19 @@ definitions:
       summary:
         type: string
     type: object
+  app.TopicsToReviewDTO:
+    properties:
+      cadidates:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/domain.TopicToReview'
+          type: array
+        type: object
+      selected:
+        items:
+          $ref: '#/definitions/domain.TopicToReview'
+        type: array
+    type: object
   controller.ResponseData:
     properties:
       code:
@@ -48,6 +61,45 @@ definitions:
         items:
           $ref: '#/definitions/app.OptionalTopic'
         type: array
+    type: object
+  controller.reqToUpdateSelected:
+    properties:
+      selected:
+        items:
+          $ref: '#/definitions/domain.TopicToReview'
+        type: array
+    type: object
+  domain.DiscussionSourceToReview:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      imported_at:
+        type: string
+      source_closed:
+        type: boolean
+      source_id:
+        type: string
+      source_type:
+        type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.TopicToReview:
+    properties:
+      dss:
+        items:
+          $ref: '#/definitions/domain.DiscussionSourceToReview'
+        type: array
+      order:
+        type: integer
+      resolved:
+        type: boolean
+      title:
+        type: string
     type: object
 info:
   contact: {}
@@ -103,9 +155,56 @@ paths:
             $ref: '#/definitions/controller.ResponseData'
       security:
       - Internal: []
-      summary: ToReview
+      summary: Create
       tags:
-      - HotTopic
+      - TopicReview
+  /v1/topic-review/{community}:
+    get:
+      consumes:
+      - application/json
+      description: get topic review info
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.TopicsToReviewDTO'
+      security:
+      - Internal: []
+      summary: Get
+      tags:
+      - TopicReview
+    put:
+      consumes:
+      - application/json
+      description: update the selected topics
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      - description: body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/controller.reqToUpdateSelected'
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/controller.ResponseData'
+      security:
+      - Internal: []
+      summary: Update
+      tags:
+      - TopicReview
 securityDefinitions:
   Internal:
     description: Type "Internal" followed by a space and internal token.

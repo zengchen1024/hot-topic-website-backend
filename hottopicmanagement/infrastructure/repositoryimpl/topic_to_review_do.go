@@ -127,16 +127,14 @@ type DiscussionSourceDO = discussionSourceDO
 type discussionSourceToReviewDO struct {
 	DiscussionSourceDO `bson:",inline"`
 
-	Title    string `bson:"title"     json:"title"          `
-	Closed   bool   `bson:"closed"    json:"closed"  `
-	Appended bool   `bson:"appended"  json:"appened"  `
+	Title  string `bson:"title"     json:"title"          `
+	Closed bool   `bson:"closed"    json:"closed"  `
 }
 
 func (do *discussionSourceToReviewDO) toDiscussionSourceToReview() domain.DiscussionSourceToReview {
 	return domain.DiscussionSourceToReview{
 		Title:            do.Title,
 		Closed:           do.Closed,
-		Appended:         do.Appended,
 		DiscussionSource: do.DiscussionSourceDO.toDiscussionSource(),
 	}
 }
@@ -145,7 +143,6 @@ func todiscussionSourceToReviewDO(v *domain.DiscussionSourceToReview) discussion
 	return discussionSourceToReviewDO{
 		Title:              v.Title,
 		Closed:             v.Closed,
-		Appended:           v.Appended,
 		DiscussionSourceDO: todiscussionSourceDO(&v.DiscussionSource),
 	}
 }

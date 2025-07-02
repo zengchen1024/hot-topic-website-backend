@@ -6,54 +6,13 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
+// CmdToUploadOptionalTopics
 type CmdToUploadOptionalTopics []OptionalTopic
 
 func (cmd CmdToUploadOptionalTopics) init() {
 	for i := range cmd {
 		cmd[i].init()
 	}
-}
-
-type DiscussionSourceInfos []DiscussionSourceInfo
-
-func (infos DiscussionSourceInfos) filterout() (resolved, unresolved []*DiscussionSourceInfo) {
-	for i := range infos {
-		if item := &infos[i]; item.Closed {
-			resolved = append(resolved, item)
-		} else {
-			unresolved = append(unresolved, item)
-		}
-	}
-
-	return
-}
-
-func (infos DiscussionSourceInfos) resolvedNum() int {
-	num := 0
-	for i := range infos {
-		if infos[i].Closed {
-			num++
-		}
-	}
-
-	return num
-}
-
-func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
-	v := make([]*DiscussionSourceInfo, len(infos))
-	h := 0
-	t := len(v) - 1
-	for i := range infos {
-		if item := &infos[i]; item.Appended {
-			v[h] = item
-			h++
-		} else {
-			v[t] = item
-			t--
-		}
-	}
-
-	return v
 }
 
 // OptionalTopic
@@ -89,7 +48,7 @@ func (ot *OptionalTopic) updateAppended(dsIdsOfOldTopic map[int]bool) {
 		item := ot.discussionSources[i]
 
 		if _, ok := dsIdsOfOldTopic[item.Id]; !ok {
-			item.Appended = true
+			item.appended = true
 		}
 	}
 }
@@ -99,7 +58,7 @@ func (ot *OptionalTopic) sort() []*DiscussionSourceInfo {
 	h := 0
 	t := len(v) - 1
 	for i := range ot.discussionSources {
-		if item := ot.discussionSources[i]; item.Appended {
+		if item := ot.discussionSources[i]; item.appended {
 			v[h] = item
 			h++
 		} else {
@@ -124,22 +83,85 @@ func (ot *OptionalTopic) getDSSet() map[int]bool {
 func (ot *OptionalTopic) toTopicToReview() (t domain.TopicToReview) {
 	t.Title = ot.Title
 
-	v := make([]domain.DiscussionSourceToReview, 0, ot.total)
-	for i := range ot.DiscussionSources {
-		v = append(v, ot.DiscussionSources[i]...)
+	v := make([]domain.DiscussionSourceToReview, ot.total)
+	items := ot.sort()
+	for i := range items {
+		v[i] = items[i].toDiscussionSourceToReview()
 	}
 
 	return
 }
 
-// DiscussionSourceInfo
-type DiscussionSourceInfo = domain.DiscussionSourceToReview
+// DiscussionSourceInfos
+type DiscussionSourceInfos []DiscussionSourceInfo
 
+func (infos DiscussionSourceInfos) filterout() (resolved, unresolved []*DiscussionSourceInfo) {
+	for i := range infos {
+		if item := &infos[i]; item.Closed {
+			resolved = append(resolved, item)
+		} else {
+			unresolved = append(unresolved, item)
+		}
+	}
+
+	return
+}
+
+func (infos DiscussionSourceInfos) resolvedNum() int {
+	num := 0
+	for i := range infos {
+		if infos[i].Closed {
+			num++
+		}
+	}
+
+	return num
+}
+
+func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
+	v := make([]*DiscussionSourceInfo, len(infos))
+	h := 0
+	t := len(v) - 1
+	for i := range infos {
+		if item := &infos[i]; item.appended {
+			v[h] = item
+			h++
+		} else {
+			v[t] = item
+			t--
+		}
+	}
+
+	return v
+}
+
+// DiscussionSourceInfo
+type DiscussionSourceInfo struct {
+	Title  string `json:"title"          required:"true"`
+	Closed bool   `json:"source_closed"  required:"true"`
+
+	domain.DiscussionSourceMeta
+
+	// if true, it is newly appended to the old hot topic
+	appended bool
+}
+
+func (info *DiscussionSourceInfo) toDiscussionSourceToReview() domain.DiscussionSourceToReview {
+	return domain.DiscussionSourceToReview{
+		Title:  info.Title,
+		Closed: info.Closed,
+		DiscussionSource: domain.DiscussionSource{
+			DiscussionSourceMeta: info.DiscussionSourceMeta,
+		},
+	}
+}
+
+// TopicsToReviewDTO
 type TopicsToReviewDTO = domain.TopicsToReview
 
+// CmdToUpdateSelected
 type CmdToUpdateSelected struct {
-	Community string                 `json:"community" required:"true"`
-	Selected  []domain.TopicToReview `json:"selected"`
+	Selected []domain.TopicToReview `json:"selected"`
 }
 
 func (cmd *CmdToUpdateSelected) Validate() error {

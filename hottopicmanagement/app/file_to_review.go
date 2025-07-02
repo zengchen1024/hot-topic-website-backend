@@ -241,7 +241,7 @@ func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, s
 }
 
 type dsInfo struct {
-	*domain.DiscussionSource
+	*domain.DiscussionSourceMeta
 
 	title  string
 	Closed bool
@@ -324,12 +324,12 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, oldTopic *domain.Hot
 		items := infos.sort()
 		for _, item := range items {
 			ds = dsInfo{
-				DiscussionSource: &item.DiscussionSource,
-				title:            item.Title,
-				Closed:           item.Closed,
+				DiscussionSourceMeta: &item.DiscussionSourceMeta,
+				title:                item.Title,
+				Closed:               item.Closed,
 			}
 
-			err = ftr.saveOneDS(&ds, row, sheet, item.Appended, ftr.appendedDiscussionSourceStyle)
+			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -388,12 +388,12 @@ func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, shee
 		items := topic.sort()
 		for _, item := range items {
 			ds = dsInfo{
-				DiscussionSource: &item.DiscussionSource,
-				title:            item.Title,
-				Closed:           item.Closed,
+				DiscussionSourceMeta: &item.DiscussionSourceMeta,
+				title:                item.Title,
+				Closed:               item.Closed,
 			}
 
-			err = ftr.saveOneDS(&ds, row, sheet, item.Appended, ftr.appendedDiscussionSourceStyle)
+			err = ftr.saveOneDS(&ds, row, sheet, item.appended, ftr.appendedDiscussionSourceStyle)
 			if err != nil {
 				return
 			}
@@ -431,9 +431,9 @@ func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, shee
 			item := topic.discussionSources[i]
 
 			ds = dsInfo{
-				DiscussionSource: &item.DiscussionSource,
-				title:            item.Title,
-				Closed:           item.Closed,
+				DiscussionSourceMeta: &item.DiscussionSourceMeta,
+				title:                item.Title,
+				Closed:               item.Closed,
 			}
 			if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
 				return
@@ -470,15 +470,15 @@ func (ftr *fileToReview) saveTopicThatRemoveFromOld(oldTopic *domain.NotHotTopic
 		oldTopic.UpdateRemoved(dsIdsOfNewTopic)
 
 		ds := dsInfo{}
-		source := domain.DiscussionSource{}
+		source := domain.DiscussionSourceMeta{}
 		items := oldTopic.Sort()
 		for _, item := range items {
 			source.Id = item.Id
 			source.URL = item.URL
 
 			ds = dsInfo{
-				title:            item.Title,
-				DiscussionSource: &source,
+				title:                item.Title,
+				DiscussionSourceMeta: &source,
 			}
 			err = ftr.saveOneDS(&ds, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
 			if err != nil {
@@ -546,9 +546,9 @@ func (ftr *fileToReview) saveIntersectedDS(topic *OptionalTopic, topicIds map[in
 		}
 
 		ds = dsInfo{
-			DiscussionSource: &item.DiscussionSource,
-			title:            item.Title,
-			Closed:           item.Closed,
+			DiscussionSourceMeta: &item.DiscussionSourceMeta,
+			title:                item.Title,
+			Closed:               item.Closed,
 		}
 		err = ftr.saveOneDS(&ds, row, sheet, color, ftr.appendedDiscussionSourceStyle)
 		if err != nil {
