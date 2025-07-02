@@ -318,6 +318,9 @@ const docTemplate = `{
         "domain.TopicToReview": {
             "type": "object",
             "properties": {
+                "category": {
+                    "type": "string"
+                },
                 "dss": {
                     "type": "array",
                     "items": {

@@ -90,6 +90,8 @@ definitions:
     type: object
   domain.TopicToReview:
     properties:
+      category:
+        type: string
       dss:
         items:
           $ref: '#/definitions/domain.DiscussionSourceToReview'
