@@ -16,11 +16,15 @@ const (
 )
 
 func tohotTopicDO(v *domain.HotTopic) hotTopicDO {
+	closedAt := 0
+	if v.IsResolved() {
+		closedAt = 1
+	}
 	return hotTopicDO{
 		Title:             v.Title,
-		Order:             v.Order,
 		DiscussionSources: todiscussionSourceDOs(v.DiscussionSources),
-		StatusTransferLog: tostatusLogDOs(v.StatusTransferLog),
+		TransferLogs:      totransferLogDOs(v.TransferLogs),
+		ClosedAt:          closedAt,
 	}
 }
 
@@ -34,11 +38,11 @@ func todiscussionSourceDOs(items []domain.DiscussionSource) []discussionSourceDO
 	return r
 }
 
-func tostatusLogDOs(items []domain.StatusLog) []statusLogDO {
-	r := make([]statusLogDO, len(items))
+func totransferLogDOs(items []domain.TransferLog) []transferLogDO {
+	r := make([]transferLogDO, len(items))
 
 	for i := range items {
-		r[i] = tostatusLogDO(&items[i])
+		r[i] = totransferLogDO(&items[i])
 	}
 
 	return r
@@ -48,12 +52,10 @@ func tostatusLogDOs(items []domain.StatusLog) []statusLogDO {
 type hotTopicDO struct {
 	Id                primitive.ObjectID   `bson:"_id"            json:"-"`
 	Title             string               `bson:"title"          json:"title"`
-	Order             int                  `bson:"order"          json:"order"`
 	DiscussionSources []discussionSourceDO `bson:"sources"        json:"sources"`
-	StatusTransferLog []statusLogDO        `bson:"logs"           json:"logs"`
+	TransferLogs      []transferLogDO      `bson:"logs"           json:"logs"`
+	ClosedAt          int                  `bson:"closed_at"      json:"closed_at"`
 	Version           int                  `bson:"version"        json:"-"`
-	ClosedAt          int64                `bson:"closed_at"      json:"-"`
-	CreatedAt         int64                `bson:"created_at"     json:"created_at"`
 }
 
 func (do *hotTopicDO) toDoc() (bson.M, error) {
@@ -68,9 +70,8 @@ func (do *hotTopicDO) toHotTopic() domain.HotTopic {
 	return domain.HotTopic{
 		Id:                do.index(),
 		Title:             do.Title,
-		Order:             do.Order,
 		DiscussionSources: do.toDiscussionSources(),
-		StatusTransferLog: do.toStatusLogs(),
+		TransferLogs:      do.toTransferLogs(),
 		Version:           do.Version,
 	}
 }
@@ -85,11 +86,11 @@ func (do *hotTopicDO) toDiscussionSources() []domain.DiscussionSource {
 	return r
 }
 
-func (do *hotTopicDO) toStatusLogs() []domain.StatusLog {
-	r := make([]domain.StatusLog, len(do.StatusTransferLog))
+func (do *hotTopicDO) toTransferLogs() []domain.TransferLog {
+	r := make([]domain.TransferLog, len(do.TransferLogs))
 
-	for i := range do.StatusTransferLog {
-		r[i] = do.StatusTransferLog[i].toStatusLog()
+	for i := range do.TransferLogs {
+		r[i] = do.TransferLogs[i].toTransferLog()
 	}
 
 	return r
@@ -129,22 +130,30 @@ func todiscussionSourceDO(v *domain.DiscussionSource) discussionSourceDO {
 	}
 }
 
-// statusLogDO
-type statusLogDO struct {
+// transferLogDO
+type transferLogDO struct {
+	Date   string `bson:"date"   json:"date"`
 	Time   string `bson:"time"   json:"time"`
 	Status string `bson:"status" json:"status"`
+	Order  int    `bson:"order"  json:"order"`
 }
 
-func (do *statusLogDO) toStatusLog() domain.StatusLog {
-	return domain.StatusLog{
-		Time:   do.Time,
-		Status: do.Status,
+func (do *transferLogDO) toTransferLog() domain.TransferLog {
+	return domain.TransferLog{
+		StatusLog: domain.StatusLog{
+			Time:   do.Time,
+			Status: do.Status,
+		},
+		Date:  do.Date,
+		Order: do.Order,
 	}
 }
 
-func tostatusLogDO(v *domain.StatusLog) statusLogDO {
-	return statusLogDO{
+func totransferLogDO(v *domain.TransferLog) transferLogDO {
+	return transferLogDO{
+		Date:   v.Date,
 		Time:   v.Time,
 		Status: v.Status,
+		Order:  v.Order,
 	}
 }

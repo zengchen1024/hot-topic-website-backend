@@ -371,7 +371,7 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, oldTopic *domain.Hot
 	if err := setCell(columnA, "顺序"); err != nil {
 		return err
 	}
-	if err := setCell(columnB, strconv.Itoa(oldTopic.Order)); err != nil {
+	if err := setCell(columnB, strconv.Itoa(oldTopic.Order())); err != nil {
 		return err
 	}
 	(*row1)++

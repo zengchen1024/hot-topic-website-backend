@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
@@ -53,4 +55,58 @@ func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, e
 	}
 
 	return TopicsToPublishDTO{v.Selected}, nil
+}
+
+func (s *appService) ApplyToHotTopic(community string, date string) error {
+	review, err := s.repoTopicsToReview.FindSelected(community)
+	if err != nil {
+		return err
+	}
+
+	selectedMap := make(map[string]*domain.TopicToReview, len(review.Selected))
+	for i := range review.Selected {
+		item := &review.Selected[i]
+		selectedMap[item.Title] = item
+	}
+
+	hts, err := s.repoHotTopic.FindOpenOnes(community)
+	if err != nil {
+		return err
+	}
+
+	for i := range hts {
+		old := &hts[i]
+
+		r := selectedMap[old.Title]
+		if r == nil {
+			return fmt.Errorf("no corresponding topic to review for the hot topic(%s)", old.Id)
+		}
+
+		old.Update(r, date)
+
+		delete(selectedMap, old.Title)
+	}
+
+	newOnes := make([]domain.HotTopic, len(selectedMap))
+	if len(selectedMap) > 0 {
+		i := 0
+		for _, r := range selectedMap {
+			newOnes[i] = r.NewHotTopic(date)
+			i++
+		}
+	}
+
+	for i := range hts {
+		if err := s.repoHotTopic.Save(community, &hts[i]); err != nil {
+			return err
+		}
+	}
+
+	for i := range newOnes {
+		if err := s.repoHotTopic.Add(community, &newOnes[i]); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

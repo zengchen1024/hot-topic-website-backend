@@ -41,6 +41,26 @@ func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	return err
 }
 
+func (impl *hotTopic) Save(community string, v *domain.HotTopic) error {
+	do := tohotTopicDO(v)
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
+	}
+
+	dao, err := impl.dao(community)
+	if err != nil {
+		return err
+	}
+
+	docFilter, err := dao.DocIdFilter(v.Id)
+	if err != nil {
+		return err
+	}
+
+	return dao.UpdateDoc(docFilter, doc, v.Version)
+}
+
 func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) {
 	dao, err := impl.dao(community)
 	if err != nil {

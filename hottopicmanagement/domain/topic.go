@@ -2,8 +2,6 @@ package domain
 
 import (
 	"fmt"
-
-	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 type DiscussionSourceMeta struct {
@@ -24,6 +22,12 @@ func (ds *DiscussionSource) isOldOne() bool {
 	return ds.ImportedAt != ""
 }
 
+func (ds *DiscussionSource) setImportDate(date string) {
+	if !ds.isOldOne() {
+		ds.ImportedAt = date
+	}
+}
+
 type StatusLog struct {
 	Status string
 	Time   string
@@ -39,15 +43,60 @@ type TransferLog struct {
 	Date  string // the date that the report of that week is created
 }
 
+func newAppendedLog(items []DiscussionSource) StatusLog {
+	// TODO
+	return StatusLog{}
+}
+
 // HotTopic
 type HotTopic struct {
 	Id                string
 	Title             string
-	Order             int
 	TransferLogs      []TransferLog
 	DiscussionSources []DiscussionSource
-	StatusTransferLog []StatusLog //TODO: delete
 	Version           int
+}
+
+func (ht *HotTopic) Order() int {
+	if n := len(ht.TransferLogs); n > 0 {
+		return ht.TransferLogs[n-1].Order
+	}
+
+	return 0
+}
+
+func (ht *HotTopic) Update(r *TopicToReview, date string) {
+	logNum := len(ht.TransferLogs)
+	if logNum == 0 {
+		// it is impossible that there aren't old logs
+		return
+	}
+
+	if ht.TransferLogs[logNum-1].Date == date {
+		// it is repeated to update the hot topic
+		return
+	}
+
+	log := TransferLog{
+		Date:  date,
+		Order: r.Order,
+	}
+
+	items := r.getAppendedDS()
+	if len(items) > 0 {
+		for i := range items {
+			items[i].ImportedAt = date
+		}
+
+		ht.DiscussionSources = append(ht.DiscussionSources, items...)
+
+		log.StatusLog = newAppendedLog(items)
+
+	} else {
+		log.StatusLog = ht.TransferLogs[len(ht.TransferLogs)-1].StatusLog
+	}
+
+	ht.TransferLogs = append(ht.TransferLogs, log)
 }
 
 func (ht *HotTopic) InitReview(t *TopicToReview) error {
@@ -65,27 +114,7 @@ func (ht *HotTopic) InitReview(t *TopicToReview) error {
 		v.ImportedAt = item.ImportedAt
 	}
 
-	t.Order = ht.Order
-
 	return nil
-}
-
-func NewHotTopic(title string, order int, sources []DiscussionSource, createdAt string) HotTopic {
-	return HotTopic{
-		Title:             title,
-		Order:             order,
-		DiscussionSources: sources,
-		TransferLogs: []TransferLog{
-			{
-				StatusLog: StatusLog{
-					Time:   createdAt,
-					Status: "New",
-				},
-				Order: order,
-				Date:  utils.Date(),
-			},
-		},
-	}
 }
 
 func (ht *HotTopic) GetDSSet() map[int]bool {
@@ -99,13 +128,9 @@ func (ht *HotTopic) GetDSSet() map[int]bool {
 }
 
 func (ht *HotTopic) IsResolved() bool {
-	for i := len(ht.StatusTransferLog) - 1; i >= 0; i-- {
-		if ht.StatusTransferLog[i].resolved() {
-			return true
-		}
-	}
+	n := len(ht.TransferLogs)
 
-	return false
+	return n > 0 && ht.TransferLogs[n-1].resolved()
 }
 
 func (ht *HotTopic) GetDiscussionSource(dsId int) *DiscussionSource {

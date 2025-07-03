@@ -19,6 +19,43 @@ type TopicToReview struct {
 	DiscussionSources []DiscussionSourceToReview `json:"dss"`
 }
 
+func (r *TopicToReview) NewHotTopic(date string) HotTopic {
+	v := make([]DiscussionSource, len(r.DiscussionSources))
+	for i := range r.DiscussionSources {
+		item := &r.DiscussionSources[i].DiscussionSource
+		item.ImportedAt = date
+
+		v = append(v, *item)
+	}
+
+	return HotTopic{
+		Title: r.Title,
+		TransferLogs: []TransferLog{
+			{
+				Order: r.Order,
+				Date:  date,
+				StatusLog: StatusLog{
+					Time:   "", // TODO
+					Status: "New",
+				},
+			},
+		},
+		DiscussionSources: v,
+	}
+}
+
+func (r *TopicToReview) getAppendedDS() []DiscussionSource {
+	v := make([]DiscussionSource, 0, len(r.DiscussionSources))
+
+	for i := range r.DiscussionSources {
+		if item := &r.DiscussionSources[i]; !item.isOldOne() {
+			v = append(v, item.DiscussionSource)
+		}
+	}
+
+	return v
+}
+
 func (t *TopicToReview) GetDSSet() map[int]bool {
 	v := make(map[int]bool, len(t.DiscussionSources))
 

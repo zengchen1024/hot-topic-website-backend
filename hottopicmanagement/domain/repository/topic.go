@@ -4,8 +4,9 @@ import "github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/d
 
 type RepoHotTopic interface {
 	Add(string, *domain.HotTopic) error
-	FindOpenOnes(string) ([]domain.HotTopic, error)
 	Find(string, string) (domain.HotTopic, error)
+	Save(string, *domain.HotTopic) error
+	FindOpenOnes(string) ([]domain.HotTopic, error)
 }
 
 type RepoNotHotTopic interface {
