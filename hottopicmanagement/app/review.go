@@ -2,8 +2,10 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
+	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 func (s *appService) toSelected(
@@ -57,7 +59,7 @@ func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, e
 	return TopicsToPublishDTO{v.Selected}, nil
 }
 
-func (s *appService) ApplyToHotTopic(community string, date string) error {
+func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
 	review, err := s.repoTopicsToReview.FindSelected(community)
 	if err != nil {
 		return err
@@ -74,6 +76,9 @@ func (s *appService) ApplyToHotTopic(community string, date string) error {
 		return err
 	}
 
+	dateStr := utils.GetDate(&date)
+	aWeekAgo := date.AddDate(0, 0, -7)
+
 	for i := range hts {
 		old := &hts[i]
 
@@ -82,7 +87,7 @@ func (s *appService) ApplyToHotTopic(community string, date string) error {
 			return fmt.Errorf("no corresponding topic to review for the hot topic(%s)", old.Id)
 		}
 
-		old.Update(r, date)
+		old.Update(r, dateStr, aWeekAgo)
 
 		delete(selectedMap, old.Title)
 	}
@@ -91,7 +96,7 @@ func (s *appService) ApplyToHotTopic(community string, date string) error {
 	if len(selectedMap) > 0 {
 		i := 0
 		for _, r := range selectedMap {
-			newOnes[i] = r.NewHotTopic(date)
+			newOnes[i] = r.NewHotTopic(dateStr)
 			i++
 		}
 	}

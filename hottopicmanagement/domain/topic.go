@@ -2,6 +2,15 @@ package domain
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/opensourceways/hot-topic-website-backend/utils"
+)
+
+const (
+	statusNew      = "New"
+	statusAppended = "Appended"
+	statusResolved = "Resolved"
 )
 
 type DiscussionSourceMeta struct {
@@ -28,13 +37,38 @@ func (ds *DiscussionSource) setImportDate(date string) {
 	}
 }
 
+func findMaxDate(items []DiscussionSource) (time.Time, error) {
+	if len(items) == 0 {
+		return time.Time{}, fmt.Errorf("no dss")
+	}
+
+	maxTime, err := time.Parse(time.RFC3339, items[0].CreatedAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	items = items[1:]
+	for i := range items {
+		t, err := time.Parse(time.RFC3339, items[i].CreatedAt)
+		if err != nil {
+			return time.Time{}, err
+		}
+
+		if t.After(maxTime) {
+			maxTime = t
+		}
+	}
+
+	return maxTime, nil
+}
+
 type StatusLog struct {
 	Status string
 	Time   string
 }
 
 func (s *StatusLog) resolved() bool {
-	return s.Status == "Resolved"
+	return s.Status == statusResolved
 }
 
 type TransferLog struct {
@@ -43,9 +77,16 @@ type TransferLog struct {
 	Date  string // the date that the report of that week is created
 }
 
-func newAppendedLog(items []DiscussionSource) StatusLog {
-	// TODO
-	return StatusLog{}
+func newAppendedLog(items []DiscussionSource, date string, aWeekAgo time.Time) (log StatusLog) {
+	log.Status = statusAppended
+
+	if v, err := findMaxDate(items); err == nil && v.After(aWeekAgo) {
+		log.Time = utils.GetDate(&v)
+	} else {
+		log.Time = date
+	}
+
+	return
 }
 
 // HotTopic
@@ -65,7 +106,7 @@ func (ht *HotTopic) Order() int {
 	return 0
 }
 
-func (ht *HotTopic) Update(r *TopicToReview, date string) {
+func (ht *HotTopic) Update(r *TopicToReview, date string, aWeekAgo time.Time) {
 	logNum := len(ht.TransferLogs)
 	if logNum == 0 {
 		// it is impossible that there aren't old logs
@@ -77,11 +118,6 @@ func (ht *HotTopic) Update(r *TopicToReview, date string) {
 		return
 	}
 
-	log := TransferLog{
-		Date:  date,
-		Order: r.Order,
-	}
-
 	items := r.getAppendedDS()
 	if len(items) > 0 {
 		for i := range items {
@@ -89,9 +125,17 @@ func (ht *HotTopic) Update(r *TopicToReview, date string) {
 		}
 
 		ht.DiscussionSources = append(ht.DiscussionSources, items...)
+	}
 
-		log.StatusLog = newAppendedLog(items)
-
+	log := TransferLog{
+		Date:  date,
+		Order: r.Order,
+	}
+	if r.Resolved {
+		log.Status = statusResolved
+		log.Time = date
+	} else if len(items) > 0 {
+		log.StatusLog = newAppendedLog(items, date, aWeekAgo)
 	} else {
 		log.StatusLog = ht.TransferLogs[len(ht.TransferLogs)-1].StatusLog
 	}

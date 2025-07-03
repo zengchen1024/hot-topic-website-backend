@@ -1,6 +1,10 @@
 package domain
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/opensourceways/hot-topic-website-backend/utils"
+)
 
 // DiscussionSourceToReview
 type DiscussionSourceToReview struct {
@@ -20,27 +24,32 @@ type TopicToReview struct {
 }
 
 func (r *TopicToReview) NewHotTopic(date string) HotTopic {
-	v := make([]DiscussionSource, len(r.DiscussionSources))
+	dss := make([]DiscussionSource, len(r.DiscussionSources))
 	for i := range r.DiscussionSources {
 		item := &r.DiscussionSources[i].DiscussionSource
 		item.ImportedAt = date
 
-		v = append(v, *item)
+		dss[i] = *item
+	}
+
+	logTime := date
+	if t, err := findMaxDate(dss); err == nil {
+		logTime = utils.GetDate(&t)
 	}
 
 	return HotTopic{
 		Title: r.Title,
 		TransferLogs: []TransferLog{
-			{
+			TransferLog{
 				Order: r.Order,
 				Date:  date,
 				StatusLog: StatusLog{
-					Time:   "", // TODO
-					Status: "New",
+					Time:   logTime,
+					Status: statusNew,
 				},
 			},
 		},
-		DiscussionSources: v,
+		DiscussionSources: dss,
 	}
 }
 

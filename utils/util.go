@@ -31,3 +31,7 @@ func Now() int64 {
 func Date() string {
 	return time.Now().Format(layout)
 }
+
+func GetDate(t *time.Time) string {
+	return t.Format(layout)
+}
