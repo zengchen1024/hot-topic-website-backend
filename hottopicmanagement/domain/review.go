@@ -124,6 +124,12 @@ type TopicsToReview struct {
 	Version    int                        `json:"-"`
 }
 
+func NewTopicsToReview() TopicsToReview {
+	return TopicsToReview{
+		Candidates: map[string][]TopicToReview{},
+	}
+}
+
 func (t *TopicsToReview) CandidatesNum() int {
 	n := 0
 
@@ -135,16 +141,16 @@ func (t *TopicsToReview) CandidatesNum() int {
 }
 
 func (t *TopicsToReview) UpdateSelected(lastHotTopic string, items []TopicToReview) error {
-	m := map[string]*TopicToReview{}
+	lastTopics := map[string]*TopicToReview{}
 	for i := range t.Selected {
 		if item := &t.Selected[i]; item.Category == lastHotTopic {
-			m[item.Title] = item
+			lastTopics[item.Title] = item
 		}
 	}
 
 	n := 0
 	for i := range items {
-		if old, ok := m[items[i].Title]; ok {
+		if old, ok := lastTopics[items[i].Title]; ok {
 			n++
 
 			if err := old.checkIfOldDSMissing(&items[i]); err != nil {
@@ -153,9 +159,11 @@ func (t *TopicsToReview) UpdateSelected(lastHotTopic string, items []TopicToRevi
 		}
 	}
 
-	if n != len(m) {
+	if n != len(lastTopics) {
 		return errors.New("missing last hot topics")
 	}
+
+	t.Selected = items
 
 	return nil
 }

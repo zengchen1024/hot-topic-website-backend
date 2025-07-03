@@ -50,7 +50,7 @@ func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics)
 		return fmt.Errorf("new excel failed, err:%s", err.Error())
 	}
 
-	toReview := domain.TopicsToReview{}
+	toReview := domain.NewTopicsToReview()
 
 	newOnes, err := s.handleOldTopics(community, cmd, file, &toReview)
 	if err != nil {

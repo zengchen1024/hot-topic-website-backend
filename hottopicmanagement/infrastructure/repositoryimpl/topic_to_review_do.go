@@ -68,7 +68,8 @@ func (do *topicsToReviewDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *topicsToReviewDO) toTopicsToReview() (t domain.TopicsToReview) {
+func (do *topicsToReviewDO) toTopicsToReview() domain.TopicsToReview {
+	t := domain.NewTopicsToReview()
 	t.Version = do.Version
 	t.Selected = do.SelectedTopicsDO.toSelected()
 
@@ -79,7 +80,7 @@ func (do *topicsToReviewDO) toTopicsToReview() (t domain.TopicsToReview) {
 		t.AddCandidate(item.Category, &v)
 	}
 
-	return
+	return t
 }
 
 // topicToReviewDO

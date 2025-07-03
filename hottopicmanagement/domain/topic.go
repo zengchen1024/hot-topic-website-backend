@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
@@ -83,6 +85,8 @@ func newAppendedLog(items []DiscussionSource, date string, aWeekAgo time.Time) (
 	if v, err := findMaxDate(items); err == nil && v.After(aWeekAgo) {
 		log.Time = utils.GetDate(&v)
 	} else {
+		logrus.Errorf("find max date failed, err:%s", err.Error())
+
 		log.Time = date
 	}
 
@@ -114,6 +118,8 @@ func (ht *HotTopic) Update(r *TopicToReview, date string, aWeekAgo time.Time) {
 	}
 
 	if ht.TransferLogs[logNum-1].Date == date {
+		logrus.Info("it is repeated to update the hot topic")
+
 		// it is repeated to update the hot topic
 		return
 	}
@@ -157,6 +163,8 @@ func (ht *HotTopic) InitReview(t *TopicToReview) error {
 		}
 		v.ImportedAt = item.ImportedAt
 	}
+
+	t.Order = ht.Order()
 
 	return nil
 }

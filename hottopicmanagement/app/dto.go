@@ -89,6 +89,8 @@ func (ot *OptionalTopic) toTopicToReview() (t domain.TopicToReview) {
 		v[i] = items[i].toDiscussionSourceToReview()
 	}
 
+	t.DiscussionSources = v
+
 	return
 }
 
