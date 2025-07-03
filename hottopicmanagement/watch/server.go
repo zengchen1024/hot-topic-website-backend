@@ -80,9 +80,9 @@ func (impl *watchingImpl) watch() {
 		triggered, err := impl.repo.FindOldest()
 		if err != nil {
 			logrus.Errorf("failed to get oldest solution, err: %s", err.Error())
+		} else {
+			impl.handle(&triggered, needStop)
 		}
-
-		impl.handle(&triggered, needStop)
 
 		// time starts.
 		if timer == nil {
