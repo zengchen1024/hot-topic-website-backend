@@ -30,6 +30,11 @@ hot_topic_management:
         hot_topic: mindspore_hot_topic
         not_hot_topic: mindspore_not_hot_topic
 
+    - community: openeuler
+      collections:
+        hot_topic: openeuler_hot_topic
+        not_hot_topic: openeuler_not_hot_topic
+
   watch:
     forums:
     - community: openubmc
