@@ -11,8 +11,8 @@ import (
 const (
 	mongodbCmdOr        = "$or"
 	mongodbCmdIn        = "$in"
-	mongodbCmdLt        = "$lt"
-	mongodbCmdGt        = "$gt"
+	mongodbCmdLte       = "$lte"
+	mongodbCmdGte       = "$gt"
 	mongodbCmdElemMatch = "$elemMatch"
 )
 

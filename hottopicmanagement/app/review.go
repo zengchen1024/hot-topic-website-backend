@@ -48,17 +48,8 @@ func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) 
 	return s.repoTopicsToReview.SaveSelected(community, &t)
 }
 
-func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, error) {
-	v, err := s.repoTopicsToReview.FindSelected(community)
-	if err != nil {
-		return TopicsToPublishDTO{}, err
-	}
-
-	return TopicsToPublishDTO{v.Selected}, nil
-}
-
-func (s *appService) GetHotTopics(community string, since int64) (HotTopicsDTO, error) {
-	hts, err := s.repoHotTopic.FindAll(community, since)
+func (s *appService) GetHotTopics(community string, date int64) (HotTopicsDTO, error) {
+	hts, err := s.repoHotTopic.FindAll(community, date)
 	if err != nil {
 		return HotTopicsDTO{}, err
 	}
@@ -66,9 +57,16 @@ func (s *appService) GetHotTopics(community string, since int64) (HotTopicsDTO, 
 	items := make([]hotTopicDTO, len(hts))
 	for i := range hts {
 		item := &hts[i]
+		log := item.GetStatus(date)
 
 		items[i] = hotTopicDTO{
-			Title:             item.Title,
+			Id:    item.Id,
+			Title: item.Title,
+			Order: log.Order,
+			Status: statusLogDTO{
+				Time:   log.Time,
+				Status: log.Status,
+			},
 			DiscussionSources: item.DiscussionSources,
 		}
 	}
@@ -82,8 +80,7 @@ func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
 		return err
 	}
 
-	since := date.AddDate(0, -1, 0)
-	hts, err := s.repoHotTopic.FindAll(community, since.Unix())
+	hts, err := s.repoHotTopic.FindAll(community, date.Unix())
 	if err != nil {
 		return err
 	}

@@ -5,7 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
-	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 const (
@@ -17,16 +16,12 @@ const (
 )
 
 func tohotTopicDO(v *domain.HotTopic) hotTopicDO {
-	closedAt := 0
-	if v.IsResolved() {
-		closedAt = 1
-	}
 	return hotTopicDO{
 		Title:             v.Title,
 		DiscussionSources: todiscussionSourceDOs(v.DiscussionSources),
 		TransferLogs:      totransferLogDOs(v.TransferLogs),
-		ClosedAt:          closedAt,
-		CreatedAt:         utils.Now(),
+		ClosedAt:          v.ResolvedAt(),
+		CreatedAt:         v.CreatedAt(),
 	}
 }
 
@@ -56,7 +51,7 @@ type hotTopicDO struct {
 	Title             string               `bson:"title"          json:"title"`
 	DiscussionSources []discussionSourceDO `bson:"sources"        json:"sources"`
 	TransferLogs      []transferLogDO      `bson:"logs"           json:"logs"`
-	ClosedAt          int                  `bson:"closed_at"      json:"closed_at"`
+	ClosedAt          int64                `bson:"closed_at"      json:"closed_at"`
 	CreatedAt         int64                `bson:"created_at"     json:"created_at"`
 	Version           int                  `bson:"version"        json:"-"`
 }
@@ -135,7 +130,7 @@ func todiscussionSourceDO(v *domain.DiscussionSource) discussionSourceDO {
 
 // transferLogDO
 type transferLogDO struct {
-	Date   string `bson:"date"   json:"date"`
+	Date   int64  `bson:"date"   json:"date"`
 	Time   string `bson:"time"   json:"time"`
 	Status string `bson:"status" json:"status"`
 	Order  int    `bson:"order"  json:"order"`

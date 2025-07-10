@@ -75,8 +75,12 @@ func (s *StatusLog) resolved() bool {
 
 type TransferLog struct {
 	StatusLog
-	Order int    // the topic is ordered on the report of that week
-	Date  string // the date that the report of that week is created
+	Order int   // the topic is ordered on the report of that week
+	Date  int64 // the date that the report of that week is created
+}
+
+func (log *TransferLog) getDate() int64 {
+	return log.Date
 }
 
 func newAppendedLog(items []DiscussionSource, date string, aWeekAgo time.Time) (log StatusLog) {
@@ -105,12 +109,22 @@ type HotTopic struct {
 	Version           int
 }
 
-func (ht *HotTopic) UpdatedAt() string {
+func (ht *HotTopic) GetStatus(date int64) TransferLog {
+	for i := range ht.TransferLogs {
+		if ht.TransferLogs[i].Date == date {
+			return ht.TransferLogs[i]
+		}
+	}
+
+	return TransferLog{}
+}
+
+func (ht *HotTopic) updatedAt() int64 {
 	if n := len(ht.TransferLogs); n > 0 {
 		return ht.TransferLogs[n-1].Date
 	}
 
-	return ""
+	return 0
 }
 
 func (ht *HotTopic) Order() int {
@@ -121,15 +135,14 @@ func (ht *HotTopic) Order() int {
 	return 0
 }
 
-func (ht *HotTopic) update(r *TopicToReview, date string, aWeekAgo time.Time) bool {
-	logNum := len(ht.TransferLogs)
-	if logNum == 0 {
+func (ht *HotTopic) update(r *TopicToReview, date int64, datestr string, aWeekAgo time.Time) bool {
+	updatedAt := ht.updatedAt()
+	if updatedAt == 0 {
 		// it is impossible that there aren't old logs
 		return false
 	}
 
-	rd := ht.TransferLogs[logNum-1].Date
-	if rd == date {
+	if updatedAt == date {
 		// for this case, the hot topis of this week are confirmed,
 		// so it is just to avoid update the hot topic repeatly
 		// because it has been saved.
@@ -142,7 +155,7 @@ func (ht *HotTopic) update(r *TopicToReview, date string, aWeekAgo time.Time) bo
 	items := r.getAppendedDS()
 	if len(items) > 0 {
 		for i := range items {
-			items[i].ImportedAt = date
+			items[i].ImportedAt = datestr
 		}
 
 		ht.DiscussionSources = append(ht.DiscussionSources, items...)
@@ -154,9 +167,9 @@ func (ht *HotTopic) update(r *TopicToReview, date string, aWeekAgo time.Time) bo
 	}
 	if r.Resolved {
 		log.Status = statusResolved
-		log.Time = date
+		log.Time = datestr
 	} else if len(items) > 0 {
-		log.StatusLog = newAppendedLog(items, date, aWeekAgo)
+		log.StatusLog = newAppendedLog(items, datestr, aWeekAgo)
 	} else {
 		log.StatusLog = ht.TransferLogs[len(ht.TransferLogs)-1].StatusLog
 	}
@@ -196,7 +209,25 @@ func (ht *HotTopic) GetDSSet() map[int]bool {
 	return v
 }
 
-func (ht *HotTopic) IsResolved() bool {
+func (ht *HotTopic) CreatedAt() int64 {
+	if len(ht.TransferLogs) == 0 {
+		return 0
+	}
+
+	return ht.TransferLogs[0].getDate()
+}
+
+func (ht *HotTopic) ResolvedAt() int64 {
+	if !ht.isResolved() {
+		return 0
+	}
+
+	n := len(ht.TransferLogs)
+
+	return ht.TransferLogs[n-1].getDate()
+}
+
+func (ht *HotTopic) isResolved() bool {
 	n := len(ht.TransferLogs)
 
 	return n > 0 && ht.TransferLogs[n-1].resolved()

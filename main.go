@@ -16,6 +16,7 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/common/infrastructure/mongodb"
 	"github.com/opensourceways/hot-topic-website-backend/config"
 	"github.com/opensourceways/hot-topic-website-backend/server"
+	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 const (
@@ -110,6 +111,12 @@ func main() {
 		DisableColors: true,
 		DisableQuote:  true,
 	})
+
+	if err := utils.InitTimeZone(); err != nil {
+		logrus.Errorf("init timezone failed, err:%s", err.Error())
+
+		return
+	}
 
 	// cfg
 	cfg := new(config.Config)

@@ -39,9 +39,9 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "integer",
-                        "description": "get topics since the time(seconds)",
-                        "name": "since",
+                        "type": "boolean",
+                        "description": "get lastest hot topics. value is true",
+                        "name": "latest",
                         "in": "query",
                         "required": true
                     }
@@ -216,40 +216,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/v1/topic-review/{community}/publish": {
-            "get": {
-                "security": [
-                    {
-                        "Internal": []
-                    }
-                ],
-                "description": "get topics to publish",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "TopicReview"
-                ],
-                "summary": "GetToPublish",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "lowercase community name, like openubmc, cann",
-                        "name": "community",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/app.TopicsToPublishDTO"
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -307,17 +273,6 @@ const docTemplate = `{
                 }
             }
         },
-        "app.TopicsToPublishDTO": {
-            "type": "object",
-            "properties": {
-                "topics": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/domain.TopicToReview"
-                    }
-                }
-            }
-        },
         "app.TopicsToReviewDTO": {
             "type": "object",
             "properties": {
@@ -347,7 +302,27 @@ const docTemplate = `{
                         "$ref": "#/definitions/domain.DiscussionSource"
                     }
                 },
+                "id": {
+                    "type": "string"
+                },
+                "order": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/app.statusLogDTO"
+                },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "app.statusLogDTO": {
+            "type": "object",
+            "properties": {
+                "status": {
+                    "type": "string"
+                },
+                "time": {
                     "type": "string"
                 }
             }

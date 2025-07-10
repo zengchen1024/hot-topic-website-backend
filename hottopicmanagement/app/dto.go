@@ -212,6 +212,14 @@ type HotTopicsDTO struct {
 }
 
 type hotTopicDTO struct {
+	Id                string                    `json:"id"`
+	Order             int                       `json:"order"`
 	Title             string                    `json:"title"`
+	Status            statusLogDTO              `json:"status"`
 	DiscussionSources []domain.DiscussionSource `json:"dss"`
+}
+
+type statusLogDTO struct {
+	Time   string `json:"time"`
+	Status string `json:"status"`
 }

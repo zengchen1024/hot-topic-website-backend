@@ -34,7 +34,7 @@ type TopicToReview struct {
 	DiscussionSources []DiscussionSourceToReview `json:"dss"`
 }
 
-func (r *TopicToReview) newHotTopic(date string) HotTopic {
+func (r *TopicToReview) newHotTopic(dateSec int64, date string) HotTopic {
 	dss := make([]DiscussionSource, len(r.DiscussionSources))
 	for i := range r.DiscussionSources {
 		item := &r.DiscussionSources[i].DiscussionSource
@@ -53,7 +53,7 @@ func (r *TopicToReview) newHotTopic(date string) HotTopic {
 		TransferLogs: []TransferLog{
 			TransferLog{
 				Order: r.Order,
-				Date:  date,
+				Date:  dateSec,
 				StatusLog: StatusLog{
 					Time:   logTime,
 					Status: statusNew,
@@ -256,6 +256,7 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 		htMap[item.Title] = item
 	}
 
+	dateSec := date.Unix()
 	dateStr := utils.GetDate(&date)
 	aWeekAgo := date.AddDate(0, 0, -7)
 
@@ -264,12 +265,12 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 
 		ht, ok := htMap[item.Title]
 		if !ok {
-			news = append(news, item.newHotTopic(dateStr))
+			news = append(news, item.newHotTopic(dateSec, dateStr))
 
 			continue
 		}
 
-		if ht.update(item, dateStr, aWeekAgo) {
+		if ht.update(item, dateSec, dateStr, aWeekAgo) {
 			changed = append(changed, ht)
 		}
 	}

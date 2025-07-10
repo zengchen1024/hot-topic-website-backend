@@ -34,13 +34,6 @@ definitions:
       summary:
         type: string
     type: object
-  app.TopicsToPublishDTO:
-    properties:
-      topics:
-        items:
-          $ref: '#/definitions/domain.TopicToReview'
-        type: array
-    type: object
   app.TopicsToReviewDTO:
     properties:
       cadidates:
@@ -60,7 +53,20 @@ definitions:
         items:
           $ref: '#/definitions/domain.DiscussionSource'
         type: array
+      id:
+        type: string
+      order:
+        type: integer
+      status:
+        $ref: '#/definitions/app.statusLogDTO'
       title:
+        type: string
+    type: object
+  app.statusLogDTO:
+    properties:
+      status:
+        type: string
+      time:
         type: string
     type: object
   controller.ResponseData:
@@ -155,11 +161,11 @@ paths:
         name: community
         required: true
         type: string
-      - description: get topics since the time(seconds)
+      - description: get lastest hot topics. value is true
         in: query
-        name: since
+        name: latest
         required: true
-        type: integer
+        type: boolean
       responses:
         "200":
           description: OK
@@ -269,27 +275,6 @@ paths:
       security:
       - Internal: []
       summary: Update
-      tags:
-      - TopicReview
-  /v1/topic-review/{community}/publish:
-    get:
-      consumes:
-      - application/json
-      description: get topics to publish
-      parameters:
-      - description: lowercase community name, like openubmc, cann
-        in: path
-        name: community
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/app.TopicsToPublishDTO'
-      security:
-      - Internal: []
-      summary: GetToPublish
       tags:
       - TopicReview
 securityDefinitions:

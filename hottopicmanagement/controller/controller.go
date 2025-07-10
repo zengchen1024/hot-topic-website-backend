@@ -21,7 +21,6 @@ func AddInternalRouterForTopicReviewController(
 	}
 
 	r.POST("/v1/hot-topic/:community/to-review", ctl.Create)
-	r.GET("/v1/topic-review/:community/publish", ctl.GetToPublish)
 	r.GET("/v1/topic-review/:community", ctl.Get)
 	r.PUT("/v1/topic-review/:community", ctl.Update)
 }
@@ -59,22 +58,6 @@ func (ctl *TopicReviewController) Create(ctx *gin.Context) {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfPost(ctx, nil)
-	}
-}
-
-// @Summary      GetToPublish
-// @Description  get topics to publish
-// @Tags         TopicReview
-// @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
-// @Accept       json
-// @Security     Internal
-// @Success      200    {object}    app.TopicsToPublishDTO{}
-// @Router       /v1/topic-review/{community}/publish [get]
-func (ctl *TopicReviewController) GetToPublish(ctx *gin.Context) {
-	if v, err := ctl.appService.GetTopicsToPublish(ctx.Param("community")); err != nil {
-		commonctl.SendError(ctx, err)
-	} else {
-		commonctl.SendRespOfGet(ctx, v)
 	}
 }
 
