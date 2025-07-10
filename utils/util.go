@@ -48,7 +48,9 @@ func DateToSecond(date string) int64 {
 		return 0
 	}
 
-	return t.Unix()
+	year, month, day := t.Date()
+
+	return time.Date(year, month, day, 0, 0, 0, 0, timeLocation).Unix()
 }
 
 func GetLastFriday() time.Time {
@@ -64,13 +66,12 @@ func GetLastFriday() time.Time {
 
 	t = t.AddDate(0, 0, -daysToSubtract)
 
-	year, month, day := t.Date() // 提取年月日
+	year, month, day := t.Date()
 
 	return time.Date(year, month, day, 0, 0, 0, 0, t.Location())
 }
 
 func InitTimeZone() (err error) {
-	// 明确指定时区（如 UTC 或 Asia/Shanghai）
 	timeLocation, err = time.LoadLocation("Asia/Shanghai")
 
 	return
