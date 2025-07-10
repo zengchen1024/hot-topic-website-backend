@@ -82,11 +82,14 @@ type TransferLog struct {
 func newAppendedLog(items []DiscussionSource, date string, aWeekAgo time.Time) (log StatusLog) {
 	log.Status = statusAppended
 
-	if v, err := findMaxDate(items); err == nil && v.After(aWeekAgo) {
+	v, err := findMaxDate(items)
+	if err != nil {
+		logrus.Errorf("find max date failed, err:%v", err)
+	}
+
+	if err == nil && v.After(aWeekAgo) {
 		log.Time = utils.GetDate(&v)
 	} else {
-		logrus.Errorf("find max date failed, err:%s", err.Error())
-
 		log.Time = date
 	}
 
@@ -102,6 +105,14 @@ type HotTopic struct {
 	Version           int
 }
 
+func (ht *HotTopic) UpdatedAt() string {
+	if n := len(ht.TransferLogs); n > 0 {
+		return ht.TransferLogs[n-1].Date
+	}
+
+	return ""
+}
+
 func (ht *HotTopic) Order() int {
 	if n := len(ht.TransferLogs); n > 0 {
 		return ht.TransferLogs[n-1].Order
@@ -110,18 +121,22 @@ func (ht *HotTopic) Order() int {
 	return 0
 }
 
-func (ht *HotTopic) Update(r *TopicToReview, date string, aWeekAgo time.Time) {
+func (ht *HotTopic) update(r *TopicToReview, date string, aWeekAgo time.Time) bool {
 	logNum := len(ht.TransferLogs)
 	if logNum == 0 {
 		// it is impossible that there aren't old logs
-		return
+		return false
 	}
 
-	if ht.TransferLogs[logNum-1].Date == date {
+	rd := ht.TransferLogs[logNum-1].Date
+	if rd == date {
+		// for this case, the hot topis of this week are confirmed,
+		// so it is just to avoid update the hot topic repeatly
+		// because it has been saved.
+
 		logrus.Info("it is repeated to update the hot topic")
 
-		// it is repeated to update the hot topic
-		return
+		return false
 	}
 
 	items := r.getAppendedDS()
@@ -147,6 +162,8 @@ func (ht *HotTopic) Update(r *TopicToReview, date string, aWeekAgo time.Time) {
 	}
 
 	ht.TransferLogs = append(ht.TransferLogs, log)
+
+	return true
 }
 
 func (ht *HotTopic) InitReview(t *TopicToReview) error {

@@ -2,6 +2,9 @@ package domain
 
 import (
 	"errors"
+	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
@@ -14,6 +17,14 @@ type DiscussionSourceToReview struct {
 	DiscussionSource
 }
 
+func (r *DiscussionSourceToReview) toDiscussionSourceInfo() DiscussionSourceInfo {
+	return DiscussionSourceInfo{
+		Id:    r.Id,
+		URL:   r.URL,
+		Title: r.Title,
+	}
+}
+
 // TopicToReview
 type TopicToReview struct {
 	Order             int                        `json:"order"`
@@ -23,7 +34,7 @@ type TopicToReview struct {
 	DiscussionSources []DiscussionSourceToReview `json:"dss"`
 }
 
-func (r *TopicToReview) NewHotTopic(date string) HotTopic {
+func (r *TopicToReview) newHotTopic(date string) HotTopic {
 	dss := make([]DiscussionSource, len(r.DiscussionSources))
 	for i := range r.DiscussionSources {
 		item := &r.DiscussionSources[i].DiscussionSource
@@ -53,6 +64,25 @@ func (r *TopicToReview) NewHotTopic(date string) HotTopic {
 	}
 }
 
+func (r *TopicToReview) newNotHotTopic(selectedDS map[int]bool) (NotHotTopic, bool) {
+	v := make([]DiscussionSourceInfo, 0, len(r.DiscussionSources))
+
+	for i := range r.DiscussionSources {
+		if item := &r.DiscussionSources[i]; !selectedDS[item.Id] {
+			v = append(v, item.toDiscussionSourceInfo())
+		}
+	}
+
+	if len(v) == 0 {
+		return NotHotTopic{}, false
+	}
+
+	return NotHotTopic{
+		Title:             r.Title,
+		DiscussionSources: v,
+	}, true
+}
+
 func (r *TopicToReview) getAppendedDS() []DiscussionSource {
 	v := make([]DiscussionSource, 0, len(r.DiscussionSources))
 
@@ -73,6 +103,12 @@ func (t *TopicToReview) GetDSSet() map[int]bool {
 	}
 
 	return v
+}
+
+func (t *TopicToReview) gatherDS(v map[int]bool) {
+	for i := range t.DiscussionSources {
+		v[t.DiscussionSources[i].Id] = true
+	}
 }
 
 func (t *TopicToReview) getDSMap() map[int]*DiscussionSourceToReview {
@@ -180,4 +216,63 @@ func (t *TopicsToReview) AddCandidate(category string, topic *TopicToReview) {
 	topic.Category = category
 
 	t.Candidates[category] = append(t.Candidates[category], *topic)
+}
+
+func (t *TopicsToReview) GenNotHotTopics() []NotHotTopic {
+	selectedDS := map[int]bool{}
+	for i := range t.Selected {
+		t.Selected[i].gatherDS(selectedDS)
+	}
+
+	n := 0
+	for _, items := range t.Candidates {
+		n += len(items)
+	}
+
+	r := make([]NotHotTopic, 0, n)
+
+	for _, items := range t.Candidates {
+		for i := range items {
+			if v, ok := items[i].newNotHotTopic(selectedDS); ok {
+				r = append(r, v)
+			}
+		}
+	}
+
+	logrus.Infof("before there is %d topics, at last there is %d topics", n, len(r))
+
+	return r
+}
+
+func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
+	[]*HotTopic, []HotTopic,
+) {
+	changed := make([]*HotTopic, 0, len(hts))
+	news := make([]HotTopic, 0, len(r.Selected))
+
+	htMap := make(map[string]*HotTopic, len(hts))
+	for i := range hts {
+		item := &hts[i]
+		htMap[item.Title] = item
+	}
+
+	dateStr := utils.GetDate(&date)
+	aWeekAgo := date.AddDate(0, 0, -7)
+
+	for i := range r.Selected {
+		item := &r.Selected[i]
+
+		ht, ok := htMap[item.Title]
+		if !ok {
+			news = append(news, item.newHotTopic(dateStr))
+
+			continue
+		}
+
+		if ht.update(item, dateStr, aWeekAgo) {
+			changed = append(changed, ht)
+		}
+	}
+
+	return changed, news
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"time"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
@@ -15,6 +16,7 @@ type AppService interface {
 	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
 	UpdateSelected(string, *CmdToUpdateSelected) error
 	GetTopicsToPublish(community string) (TopicsToPublishDTO, error)
+	ApplyToHotTopic(community string, date time.Time) error
 }
 
 func NewAppService(

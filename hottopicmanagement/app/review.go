@@ -1,11 +1,9 @@
 package app
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
-	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 func (s *appService) toSelected(
@@ -60,58 +58,29 @@ func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, e
 }
 
 func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
-	review, err := s.repoTopicsToReview.FindSelected(community)
+	review, err := s.repoTopicsToReview.Find(community)
 	if err != nil {
 		return err
 	}
 
-	selectedMap := make(map[string]*domain.TopicToReview, len(review.Selected))
-	for i := range review.Selected {
-		item := &review.Selected[i]
-		selectedMap[item.Title] = item
-	}
-
-	hts, err := s.repoHotTopic.FindOpenOnes(community)
+	hts, err := s.repoHotTopic.FindAll(community)
 	if err != nil {
 		return err
 	}
 
-	dateStr := utils.GetDate(&date)
-	aWeekAgo := date.AddDate(0, 0, -7)
+	changed, news := review.FilterChangedAndNews(hts, date)
 
-	for i := range hts {
-		old := &hts[i]
-
-		r := selectedMap[old.Title]
-		if r == nil {
-			return fmt.Errorf("no corresponding topic to review for the hot topic(%s)", old.Id)
-		}
-
-		old.Update(r, dateStr, aWeekAgo)
-
-		delete(selectedMap, old.Title)
-	}
-
-	newOnes := make([]domain.HotTopic, len(selectedMap))
-	if len(selectedMap) > 0 {
-		i := 0
-		for _, r := range selectedMap {
-			newOnes[i] = r.NewHotTopic(dateStr)
-			i++
-		}
-	}
-
-	for i := range hts {
-		if err := s.repoHotTopic.Save(community, &hts[i]); err != nil {
+	for i := range changed {
+		if err := s.repoHotTopic.Save(community, changed[i]); err != nil {
 			return err
 		}
 	}
 
-	for i := range newOnes {
-		if err := s.repoHotTopic.Add(community, &newOnes[i]); err != nil {
+	for i := range news {
+		if err := s.repoHotTopic.Add(community, &news[i]); err != nil {
 			return err
 		}
 	}
 
-	return nil
+	return s.repoNotHotTopic.Save(community, review.GenNotHotTopics())
 }

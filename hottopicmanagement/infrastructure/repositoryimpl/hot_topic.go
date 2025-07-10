@@ -61,6 +61,26 @@ func (impl *hotTopic) Save(community string, v *domain.HotTopic) error {
 	return dao.UpdateDoc(docFilter, doc, v.Version)
 }
 
+func (impl *hotTopic) FindAll(community string) ([]domain.HotTopic, error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return nil, err
+	}
+
+	var dos []hotTopicDO
+
+	if err := dao.GetDocs(bson.M{}, nil, nil, &dos); err != nil {
+		return nil, err
+	}
+
+	v := make([]domain.HotTopic, len(dos))
+	for i := range dos {
+		v[i] = dos[i].toHotTopic()
+	}
+
+	return v, nil
+}
+
 func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) {
 	dao, err := impl.dao(community)
 	if err != nil {

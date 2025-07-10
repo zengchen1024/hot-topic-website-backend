@@ -17,7 +17,7 @@ type notHotTopic struct {
 	daoMap
 }
 
-func (impl *notHotTopic) Add(community string, v *domain.NotHotTopic) error {
+func (impl *notHotTopic) add(community string, v *domain.NotHotTopic) error {
 	do := tonotNotHotTopicDO(v)
 	doc, err := do.toDoc()
 	if err != nil {
@@ -37,6 +37,33 @@ func (impl *notHotTopic) Add(community string, v *domain.NotHotTopic) error {
 	}
 
 	return err
+}
+
+func (impl *notHotTopic) Save(community string, items []domain.NotHotTopic) error {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return err
+	}
+
+	if err := dao.DeleteDocs(bson.M{}); err != nil {
+		return err
+	}
+
+	for i := range items {
+		item := &items[i]
+
+		do := tonotNotHotTopicDO(item)
+		doc, err := do.toDoc()
+		if err != nil {
+			return err
+		}
+
+		if _, err = dao.InsertDoc(doc); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error) {
