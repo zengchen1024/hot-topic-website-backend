@@ -5,6 +5,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
+	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 const (
@@ -25,6 +26,7 @@ func tohotTopicDO(v *domain.HotTopic) hotTopicDO {
 		DiscussionSources: todiscussionSourceDOs(v.DiscussionSources),
 		TransferLogs:      totransferLogDOs(v.TransferLogs),
 		ClosedAt:          closedAt,
+		CreatedAt:         utils.Now(),
 	}
 }
 
@@ -55,6 +57,7 @@ type hotTopicDO struct {
 	DiscussionSources []discussionSourceDO `bson:"sources"        json:"sources"`
 	TransferLogs      []transferLogDO      `bson:"logs"           json:"logs"`
 	ClosedAt          int                  `bson:"closed_at"      json:"closed_at"`
+	CreatedAt         int64                `bson:"created_at"     json:"created_at"`
 	Version           int                  `bson:"version"        json:"-"`
 }
 

@@ -22,7 +22,7 @@ const docTemplate = `{
                         "Internal": []
                     }
                 ],
-                "description": "get topic to publish",
+                "description": "get hot topics",
                 "consumes": [
                     "application/json"
                 ],
@@ -37,13 +37,20 @@ const docTemplate = `{
                         "name": "community",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "get topics since the time(seconds)",
+                        "name": "since",
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/app.TopicsToPublishDTO"
+                            "$ref": "#/definitions/app.HotTopicsDTO"
                         }
                     }
                 }
@@ -209,6 +216,40 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/topic-review/{community}/publish": {
+            "get": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "get topics to publish",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TopicReview"
+                ],
+                "summary": "GetToPublish",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.TopicsToPublishDTO"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -235,6 +276,17 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string"
+                }
+            }
+        },
+        "app.HotTopicsDTO": {
+            "type": "object",
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app.hotTopicDTO"
+                    }
                 }
             }
         },
@@ -286,6 +338,20 @@ const docTemplate = `{
                 }
             }
         },
+        "app.hotTopicDTO": {
+            "type": "object",
+            "properties": {
+                "dss": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.DiscussionSource"
+                    }
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
         "controller.ResponseData": {
             "type": "object",
             "properties": {
@@ -328,6 +394,29 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.TopicToReview"
                     }
+                }
+            }
+        },
+        "domain.DiscussionSource": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "imported_at": {
+                    "type": "string"
+                },
+                "source_id": {
+                    "type": "string"
+                },
+                "source_type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
                 }
             }
         },

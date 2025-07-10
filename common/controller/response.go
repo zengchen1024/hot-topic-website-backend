@@ -63,6 +63,19 @@ func SendBadRequestBody(ctx *gin.Context, err error) {
 	}
 }
 
+// SendBadRequestParam sends a bad request parameter error response.
+func SendBadRequestParam(ctx *gin.Context, err error) {
+	if _, ok := err.(errorCode); ok {
+		SendError(ctx, err)
+	} else {
+		_ = ctx.Error(err)
+		ctx.JSON(
+			http.StatusBadRequest,
+			newResponseCodeMsg(errorBadRequestParam, err.Error()),
+		)
+	}
+}
+
 // SendRespOfPost sends a successful POST response with data if provided.
 func SendRespOfPost(ctx *gin.Context, data interface{}) {
 	if data == nil {

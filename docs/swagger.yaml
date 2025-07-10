@@ -16,6 +16,13 @@ definitions:
       url:
         type: string
     type: object
+  app.HotTopicsDTO:
+    properties:
+      topics:
+        items:
+          $ref: '#/definitions/app.hotTopicDTO'
+        type: array
+    type: object
   app.OptionalTopic:
     properties:
       discussion:
@@ -47,6 +54,15 @@ definitions:
           $ref: '#/definitions/domain.TopicToReview'
         type: array
     type: object
+  app.hotTopicDTO:
+    properties:
+      dss:
+        items:
+          $ref: '#/definitions/domain.DiscussionSource'
+        type: array
+      title:
+        type: string
+    type: object
   controller.ResponseData:
     properties:
       code:
@@ -75,6 +91,21 @@ definitions:
         items:
           $ref: '#/definitions/domain.TopicToReview'
         type: array
+    type: object
+  domain.DiscussionSource:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      imported_at:
+        type: string
+      source_id:
+        type: string
+      source_type:
+        type: string
+      url:
+        type: string
     type: object
   domain.DiscussionSourceToReview:
     properties:
@@ -117,18 +148,23 @@ paths:
     get:
       consumes:
       - application/json
-      description: get topic to publish
+      description: get hot topics
       parameters:
       - description: lowercase community name, like openubmc, cann
         in: path
         name: community
         required: true
         type: string
+      - description: get topics since the time(seconds)
+        in: query
+        name: since
+        required: true
+        type: integer
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/app.TopicsToPublishDTO'
+            $ref: '#/definitions/app.HotTopicsDTO'
       security:
       - Internal: []
       summary: Get
@@ -233,6 +269,27 @@ paths:
       security:
       - Internal: []
       summary: Update
+      tags:
+      - TopicReview
+  /v1/topic-review/{community}/publish:
+    get:
+      consumes:
+      - application/json
+      description: get topics to publish
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.TopicsToPublishDTO'
+      security:
+      - Internal: []
+      summary: GetToPublish
       tags:
       - TopicReview
 securityDefinitions:

@@ -16,6 +16,7 @@ type AppService interface {
 	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
 	UpdateSelected(string, *CmdToUpdateSelected) error
 	GetTopicsToPublish(community string) (TopicsToPublishDTO, error)
+	GetHotTopics(community string, since int64) (HotTopicsDTO, error)
 	ApplyToHotTopic(community string, date time.Time) error
 }
 

@@ -6,6 +6,8 @@ Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved
 package controller
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 
 	commonctl "github.com/opensourceways/hot-topic-website-backend/common/controller"
@@ -65,15 +67,28 @@ func (ctl *HotTopicController) Add(ctx *gin.Context) {
 }
 
 // @Summary      Get
-// @Description  get topic to publish
+// @Description  get hot topics
 // @Tags         HotTopic
 // @Param        community   path    string             true    "lowercase community name, like openubmc, cann"
+// @Param        since       query   int64              true    "get topics since the time(seconds)"
 // @Accept       json
 // @Security     Internal
-// @Success      200    {object}    app.TopicsToPublishDTO{}
+// @Success      200    {object}    app.HotTopicsDTO{}
 // @Router       /v1/hot-topic/{community} [get]
 func (ctl *HotTopicController) Get(ctx *gin.Context) {
-	if v, err := ctl.reviewService.GetTopicsToPublish(ctx.Param("community")); err != nil {
+	var since int64
+	if v, ok := ctx.GetQuery("since"); ok {
+		v1, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			commonctl.SendBadRequestParam(ctx, err)
+
+			return
+		}
+
+		since = v1
+	}
+
+	if v, err := ctl.reviewService.GetHotTopics(ctx.Param("community"), since); err != nil {
 		commonctl.SendError(ctx, err)
 	} else {
 		commonctl.SendRespOfGet(ctx, v)

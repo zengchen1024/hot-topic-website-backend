@@ -61,7 +61,7 @@ func (impl *hotTopic) Save(community string, v *domain.HotTopic) error {
 	return dao.UpdateDoc(docFilter, doc, v.Version)
 }
 
-func (impl *hotTopic) FindAll(community string) ([]domain.HotTopic, error) {
+func (impl *hotTopic) FindAll(community string, since int64) ([]domain.HotTopic, error) {
 	dao, err := impl.dao(community)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,12 @@ func (impl *hotTopic) FindAll(community string) ([]domain.HotTopic, error) {
 
 	var dos []hotTopicDO
 
-	if err := dao.GetDocs(bson.M{}, nil, nil, &dos); err != nil {
+	filter := bson.M{}
+	if since > 0 {
+		filter[fieldCreatedAt] = bson.M{mongodbCmdGt: since}
+	}
+
+	if err := dao.GetDocs(filter, nil, nil, &dos); err != nil {
 		return nil, err
 	}
 

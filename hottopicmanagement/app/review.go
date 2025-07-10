@@ -57,13 +57,33 @@ func (s *appService) GetTopicsToPublish(community string) (TopicsToPublishDTO, e
 	return TopicsToPublishDTO{v.Selected}, nil
 }
 
+func (s *appService) GetHotTopics(community string, since int64) (HotTopicsDTO, error) {
+	hts, err := s.repoHotTopic.FindAll(community, since)
+	if err != nil {
+		return HotTopicsDTO{}, err
+	}
+
+	items := make([]hotTopicDTO, len(hts))
+	for i := range hts {
+		item := &hts[i]
+
+		items[i] = hotTopicDTO{
+			Title:             item.Title,
+			DiscussionSources: item.DiscussionSources,
+		}
+	}
+
+	return HotTopicsDTO{Topics: items}, nil
+}
+
 func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
 	review, err := s.repoTopicsToReview.Find(community)
 	if err != nil {
 		return err
 	}
 
-	hts, err := s.repoHotTopic.FindAll(community)
+	since := date.AddDate(0, -1, 0)
+	hts, err := s.repoHotTopic.FindAll(community, since.Unix())
 	if err != nil {
 		return err
 	}

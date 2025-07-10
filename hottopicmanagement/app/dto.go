@@ -206,3 +206,12 @@ func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
 type TopicsToPublishDTO struct {
 	Topics []domain.TopicToReview `json:"topics"`
 }
+
+type HotTopicsDTO struct {
+	Topics []hotTopicDTO `json:"topics"`
+}
+
+type hotTopicDTO struct {
+	Title             string                    `json:"title"`
+	DiscussionSources []domain.DiscussionSource `json:"dss"`
+}

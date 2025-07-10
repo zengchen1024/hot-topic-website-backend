@@ -12,6 +12,7 @@ const (
 	mongodbCmdOr        = "$or"
 	mongodbCmdIn        = "$in"
 	mongodbCmdLt        = "$lt"
+	mongodbCmdGt        = "$gt"
 	mongodbCmdElemMatch = "$elemMatch"
 )
 
