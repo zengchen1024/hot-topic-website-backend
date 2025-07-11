@@ -25,7 +25,7 @@ func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	}
 	doc[fieldVersion] = 0
 
-	docFilter := bson.M{fieldTitle: v.Title}
+	docFilter := bson.M{fieldTitle: v.Title, fieldClosedAt: 0}
 
 	dao, err := impl.dao(community)
 	if err != nil {
