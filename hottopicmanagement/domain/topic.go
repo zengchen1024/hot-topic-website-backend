@@ -153,14 +153,8 @@ func (ht *HotTopic) update(r *TopicToReview, date int64, datestr string, aWeekAg
 		return false
 	}
 
-	items := r.getAppendedDS()
-	if len(items) > 0 {
-		for i := range items {
-			items[i].ImportedAt = datestr
-		}
-
-		ht.DiscussionSources = append(ht.DiscussionSources, items...)
-	}
+	items, all := r.initAppendedDS(datestr)
+	ht.DiscussionSources = all
 
 	log := TransferLog{
 		Date:  date,

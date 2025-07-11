@@ -82,16 +82,27 @@ func (r *TopicToReview) newNotHotTopic(selectedDS map[int]bool) (NotHotTopic, bo
 	}, true
 }
 
-func (r *TopicToReview) getAppendedDS() []DiscussionSource {
-	v := make([]DiscussionSource, 0, len(r.DiscussionSources))
+func (r *TopicToReview) initAppendedDS(date string) (appends []DiscussionSource, all []DiscussionSource) {
+	n := r.dsNum()
+	all = make([]DiscussionSource, n)
+	appends = make([]DiscussionSource, 0, n)
 
 	for i := range r.DiscussionSources {
-		if item := &r.DiscussionSources[i]; !item.isOldOne() {
-			v = append(v, item.DiscussionSource)
+		item := &r.DiscussionSources[i]
+		if !item.isOldOne() {
+			item.ImportedAt = date
+
+			appends = append(appends, item.DiscussionSource)
 		}
+
+		all[i] = item.DiscussionSource
 	}
 
-	return v
+	return
+}
+
+func (r *TopicToReview) dsNum() int {
+	return len(r.DiscussionSources)
 }
 
 func (t *TopicToReview) GetDSSet() map[int]bool {
