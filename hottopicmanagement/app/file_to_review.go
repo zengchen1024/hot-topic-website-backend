@@ -243,7 +243,6 @@ func (ftr *fileToReview) saveTopic(topicTitle string, row1 *int, sheet string, s
 type dsInfo struct {
 	*domain.DiscussionSourceMeta
 
-	title  string
 	Closed bool
 }
 
@@ -258,7 +257,7 @@ func (ftr *fileToReview) saveOneDS(ds *dsInfo, row int, sheet string, color bool
 	f := ftr.file
 
 	bcell := cellId(columnB, row)
-	if err = f.SetCellValue(sheet, bcell, ds.title); err != nil {
+	if err = f.SetCellValue(sheet, bcell, ds.Title); err != nil {
 		return
 	}
 
@@ -325,7 +324,6 @@ func (ftr *fileToReview) saveHotTopic(topic *OptionalTopic, oldTopic *domain.Hot
 		for _, item := range items {
 			ds = dsInfo{
 				DiscussionSourceMeta: &item.DiscussionSourceMeta,
-				title:                item.Title,
 				Closed:               item.Closed,
 			}
 
@@ -389,7 +387,6 @@ func (ftr *fileToReview) saveAppendedTopic(topic *OptionalTopic, row1 *int, shee
 		for _, item := range items {
 			ds = dsInfo{
 				DiscussionSourceMeta: &item.DiscussionSourceMeta,
-				title:                item.Title,
 				Closed:               item.Closed,
 			}
 
@@ -432,7 +429,6 @@ func (ftr *fileToReview) saveTopicDirectly(topic *OptionalTopic, row1 *int, shee
 
 			ds = dsInfo{
 				DiscussionSourceMeta: &item.DiscussionSourceMeta,
-				title:                item.Title,
 				Closed:               item.Closed,
 			}
 			if err = ftr.saveOneDS(&ds, row, sheet, false, 0); err != nil {
@@ -475,9 +471,9 @@ func (ftr *fileToReview) saveTopicThatRemoveFromOld(oldTopic *domain.NotHotTopic
 		for _, item := range items {
 			source.Id = item.Id
 			source.URL = item.URL
+			source.Title = item.Title
 
 			ds = dsInfo{
-				title:                item.Title,
 				DiscussionSourceMeta: &source,
 			}
 			err = ftr.saveOneDS(&ds, row, sheet, item.Removed(), ftr.removedDiscussionSourceStyle)
@@ -547,7 +543,6 @@ func (ftr *fileToReview) saveIntersectedDS(topic *OptionalTopic, topicIds map[in
 
 		ds = dsInfo{
 			DiscussionSourceMeta: &item.DiscussionSourceMeta,
-			title:                item.Title,
 			Closed:               item.Closed,
 		}
 		err = ftr.saveOneDS(&ds, row, sheet, color, ftr.appendedDiscussionSourceStyle)

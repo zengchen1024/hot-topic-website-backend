@@ -11,8 +11,7 @@ import (
 
 // DiscussionSourceToReview
 type DiscussionSourceToReview struct {
-	Title  string `json:"title"`
-	Closed bool   `json:"source_closed"`
+	Closed bool `json:"source_closed"`
 
 	DiscussionSource
 }

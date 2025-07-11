@@ -19,6 +19,7 @@ type DiscussionSourceMeta struct {
 	Id        int    `json:"id"           required:"true"`
 	URL       string `json:"url"          required:"true"`
 	Type      string `json:"source_type"  required:"true"`
+	Title     string `json:"title"        required:"true"`
 	SourceId  string `json:"source_id"    required:"true"`
 	CreatedAt string `json:"created_at"   required:"true"`
 }
@@ -260,13 +261,6 @@ func (info *DiscussionSourceInfo) Removed() bool {
 type NotHotTopic struct {
 	Title             string
 	DiscussionSources []DiscussionSourceInfo
-}
-
-func NewNotHotTopic(title string, sources []DiscussionSourceInfo) NotHotTopic {
-	return NotHotTopic{
-		Title:             title,
-		DiscussionSources: sources,
-	}
 }
 
 func (nht *NotHotTopic) GetDSSet() map[int]bool {

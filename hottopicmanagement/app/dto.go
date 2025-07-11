@@ -139,8 +139,7 @@ func (infos DiscussionSourceInfos) sort() []*DiscussionSourceInfo {
 
 // DiscussionSourceInfo
 type DiscussionSourceInfo struct {
-	Title  string `json:"title"          required:"true"`
-	Closed bool   `json:"source_closed"  required:"true"`
+	Closed bool `json:"source_closed"  required:"true"`
 
 	domain.DiscussionSourceMeta
 
@@ -150,7 +149,6 @@ type DiscussionSourceInfo struct {
 
 func (info *DiscussionSourceInfo) toDiscussionSourceToReview() domain.DiscussionSourceToReview {
 	return domain.DiscussionSourceToReview{
-		Title:  info.Title,
 		Closed: info.Closed,
 		DiscussionSource: domain.DiscussionSource{
 			DiscussionSourceMeta: info.DiscussionSourceMeta,
