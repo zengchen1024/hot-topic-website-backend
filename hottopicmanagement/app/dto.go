@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"sort"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
@@ -165,11 +166,32 @@ type CmdToUpdateSelected struct {
 }
 
 func (cmd *CmdToUpdateSelected) Validate() error {
+	if err := cmd.checkOrder(); err != nil {
+		return err
+	}
+
 	if err := cmd.checkDuplicateDS(); err != nil {
 		return err
 	}
 
 	return cmd.checkDuplicateTopic()
+}
+
+func (cmd *CmdToUpdateSelected) checkOrder() error {
+	nums := make([]int, len(cmd.Selected))
+	for i := range cmd.Selected {
+		nums[i] = cmd.Selected[i].Order
+	}
+
+	sort.Ints(nums)
+
+	for i, num := range nums {
+		if num != i+1 {
+			return errors.New("the topics are not ordered by asc")
+		}
+	}
+
+	return nil
 }
 
 func (cmd *CmdToUpdateSelected) checkDuplicateTopic() error {
@@ -201,6 +223,7 @@ func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
 	return nil
 }
 
+// toHotTopicsDTO
 func toHotTopicsDTO(hts []domain.HotTopic, date int64) HotTopicsDTO {
 	items := make([]hotTopicDTO, len(hts))
 	for i := range hts {
