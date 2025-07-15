@@ -15,7 +15,7 @@ type AppService interface {
 	NewReviews(string, CmdToUploadOptionalTopics) error
 	GetHotTopics(community string, since int64) (HotTopicsDTO, error)
 	UpdateSelected(string, *CmdToUpdateSelected) error
-	ApplyToHotTopic(community string, date time.Time) error
+	ApplyToHotTopic(community string) error
 	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
 	GetTopicsToPublish(community string) (dto HotTopicsDTO, err error)
 }
@@ -46,6 +46,10 @@ func (s *appService) reviewFile(community string) string {
 }
 
 func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics) error {
+	if utils.Now().Weekday() != time.Friday {
+		return errors.New("must invoke on Friday")
+	}
+
 	cmd.init()
 
 	file, err := newfileToReview(s.reviewFile(community))
@@ -53,7 +57,7 @@ func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics)
 		return fmt.Errorf("new excel failed, err:%s", err.Error())
 	}
 
-	toReview := domain.NewTopicsToReview()
+	toReview := domain.NewTopicsToReview(utils.GetLastFriday().Unix())
 
 	newOnes, err := s.handleOldTopics(community, cmd, file, &toReview)
 	if err != nil {

@@ -18,7 +18,7 @@ func totopicSolutionsDO(Community string, retryNum int, v []domain.TopicSolution
 	return topicSolutionsDO{
 		RetryNum:       retryNum,
 		Community:      Community,
-		CreatedAt:      utils.Now(),
+		CreatedAt:      utils.NowSec(),
 		TopicSolutions: r,
 	}
 }

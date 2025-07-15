@@ -26,16 +26,16 @@ func LoadFromYaml(path string, cfg interface{}) error {
 	return yaml.Unmarshal(b, cfg)
 }
 
-func now() time.Time {
+func Now() time.Time {
 	return time.Now().In(timeLocation)
 }
 
-func Now() int64 {
-	return now().Unix()
+func NowSec() int64 {
+	return Now().Unix()
 }
 
 func Date() string {
-	return now().Format(layout)
+	return Now().Format(layout)
 }
 
 func GetDate(t *time.Time) string {
@@ -54,7 +54,7 @@ func DateToSecond(date string) int64 {
 }
 
 func GetLastFriday() time.Time {
-	t := now()
+	t := Now()
 	weekday := t.Weekday()
 
 	var daysToSubtract int

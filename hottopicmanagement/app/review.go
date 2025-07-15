@@ -1,7 +1,7 @@
 package app
 
 import (
-	"time"
+	"fmt"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/utils"
@@ -58,11 +58,27 @@ func (s *appService) GetHotTopics(community string, date int64) (HotTopicsDTO, e
 	return toHotTopicsDTO(hts, date), nil
 }
 
+func (s *appService) getReviews(community string, dateSec int64) (review domain.TopicsToReview, err error) {
+	review, err = s.repoTopicsToReview.Find(community)
+	if err != nil {
+		return
+	}
+
+	if !review.IsMatchedReview(dateSec) {
+		err = fmt.Errorf(
+			"review is not right one which match the time. expect:%d, has:%d",
+			dateSec, review.Date,
+		)
+	}
+
+	return
+}
+
 func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err error) {
 	date := utils.GetLastFriday()
 	dateSec := date.Unix()
 
-	review, err := s.repoTopicsToReview.Find(community)
+	review, err := s.getReviews(community, dateSec)
 	if err != nil {
 		return
 	}
@@ -82,13 +98,16 @@ func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err
 	return
 }
 
-func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
-	review, err := s.repoTopicsToReview.Find(community)
+func (s *appService) ApplyToHotTopic(community string) error {
+	date := utils.GetLastFriday()
+	dateSec := date.Unix()
+
+	review, err := s.getReviews(community, dateSec)
 	if err != nil {
 		return err
 	}
 
-	hts, err := s.repoHotTopic.FindAll(community, date.Unix())
+	hts, err := s.repoHotTopic.FindAll(community, dateSec)
 	if err != nil {
 		return err
 	}

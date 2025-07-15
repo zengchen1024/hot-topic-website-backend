@@ -171,12 +171,18 @@ type TopicsToReview struct {
 	Candidates map[string][]TopicToReview `json:"cadidates"`
 	Selected   []TopicToReview            `json:"selected"`
 	Version    int                        `json:"-"`
+	Date       int64                      `json:"-"`
 }
 
-func NewTopicsToReview() TopicsToReview {
+func NewTopicsToReview(date int64) TopicsToReview {
 	return TopicsToReview{
 		Candidates: map[string][]TopicToReview{},
+		Date:       date,
 	}
+}
+
+func (t *TopicsToReview) IsMatchedReview(date int64) bool {
+	return t.Date == date
 }
 
 func (t *TopicsToReview) CandidatesNum() int {

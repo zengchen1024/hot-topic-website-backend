@@ -11,20 +11,20 @@ const (
 	fieldCandidates = "candidates"
 )
 
-func totopicsToReviewDO(Community string, v *domain.TopicsToReview) (t topicsToReviewDO) {
-	t.Community = Community
-
-	t.SelectedTopicsDO = toSelectedTopicsDO(v.Selected)
-
+func totopicsToReviewDO(Community string, v *domain.TopicsToReview) topicsToReviewDO {
 	candidates := make([]topicToReviewDO, 0, v.CandidatesNum())
 	for _, items := range v.Candidates {
 		for i := range items {
 			candidates = append(candidates, totopicToReviewDO(&items[i]))
 		}
 	}
-	t.Candidates = candidates
 
-	return
+	return topicsToReviewDO{
+		Candidates:       candidates,
+		Date:             v.Date,
+		Community:        Community,
+		SelectedTopicsDO: toSelectedTopicsDO(v.Selected),
+	}
 }
 
 func toSelectedTopicsDO(items []domain.TopicToReview) SelectedTopicsDO {
@@ -57,9 +57,10 @@ func (do *SelectedTopicsDO) toSelected() []domain.TopicToReview {
 
 // topicsToReviewDO
 type topicsToReviewDO struct {
-	Community  string            `bson:"community"   json:"community"`
 	Candidates []topicToReviewDO `bson:"candidates"  json:"candidates"`
+	Community  string            `bson:"community"   json:"community"`
 	Version    int               `bson:"version"     json:"-"`
+	Date       int64             `bson:"date"        json:"date"`
 
 	SelectedTopicsDO `bson:",inline"`
 }
@@ -69,7 +70,7 @@ func (do *topicsToReviewDO) toDoc() (bson.M, error) {
 }
 
 func (do *topicsToReviewDO) toTopicsToReview() domain.TopicsToReview {
-	t := domain.NewTopicsToReview()
+	t := domain.NewTopicsToReview(do.Date)
 	t.Version = do.Version
 	t.Selected = do.SelectedTopicsDO.toSelected()
 
