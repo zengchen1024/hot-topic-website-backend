@@ -182,6 +182,10 @@ func (ftr *fileToReview) initLegend() error {
 }
 
 func (ftr *fileToReview) saveToFile() error {
+	if ftr.filePath == "" {
+		return nil
+	}
+
 	h := func(sheet string, num int) error {
 		return ftr.file.SetCellValue(sheet, "A1", "话题总数："+strconv.Itoa(num))
 	}

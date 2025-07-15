@@ -27,7 +27,7 @@ func NewAppService(
 	repoTopicsToReview repository.RepoTopicsToReview,
 ) *appService {
 	return &appService{
-		filePath:           config.FilePath,
+		cfg:                *config,
 		repoHotTopic:       repoHotTopic,
 		repoNotHotTopic:    repoNotHotTopic,
 		repoTopicsToReview: repoTopicsToReview,
@@ -35,14 +35,18 @@ func NewAppService(
 }
 
 type appService struct {
-	filePath           string
+	cfg                Config
 	repoHotTopic       repository.RepoHotTopic
 	repoNotHotTopic    repository.RepoNotHotTopic
 	repoTopicsToReview repository.RepoTopicsToReview
 }
 
 func (s *appService) reviewFile(community string) string {
-	return filepath.Join(s.filePath, fmt.Sprintf("%s_%s.xlsx", community, utils.Date()))
+	if !s.cfg.SaveToFile {
+		return ""
+	}
+
+	return filepath.Join(s.cfg.FilePath, fmt.Sprintf("%s_%s.xlsx", community, utils.Date()))
 }
 
 func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics) error {
