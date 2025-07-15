@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	commonrepo "github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 )
 
@@ -79,7 +80,11 @@ func (impl *watchingImpl) watch() {
 	for {
 		triggered, err := impl.repo.FindOldest()
 		if err != nil {
-			logrus.Errorf("failed to get oldest solution, err: %s", err.Error())
+			if commonrepo.IsErrorResourceNotFound(err) {
+				logrus.Info("no solution exists")
+			} else {
+				logrus.Errorf("failed to get oldest solution, err: %s", err.Error())
+			}
 		} else {
 			impl.handle(&triggered, needStop)
 		}

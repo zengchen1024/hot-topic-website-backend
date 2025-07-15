@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
+	commonrepo "github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 )
@@ -37,6 +38,10 @@ func (impl *topicSolution) FindOldest() (repository.TopicSolutions, error) {
 	var do topicSolutionsDO
 
 	if err := impl.dao.GetDoc(bson.M{}, nil, sort, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = commonrepo.NewErrorResourceNotFound(err)
+		}
+
 		return repository.TopicSolutions{}, err
 	}
 

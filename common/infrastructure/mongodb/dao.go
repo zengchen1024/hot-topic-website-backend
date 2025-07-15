@@ -249,7 +249,7 @@ func (impl *daoImpl) GetDoc(filter, project, sort bson.M, result interface{}) er
 			})
 		}
 
-		sr := impl.col.FindOne(ctx, filter)
+		sr := impl.col.FindOne(ctx, filter, opts...)
 		err := sr.Decode(result)
 		if err != nil && isErrOfNoDocuments(err) {
 			return errDocNotExists
