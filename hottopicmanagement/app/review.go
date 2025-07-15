@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
+	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
 func (s *appService) toSelected(
@@ -39,7 +40,7 @@ func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) 
 		return err
 	}
 
-	if err := t.UpdateSelected(sheetLastTopics, cmd.Selected); err != nil {
+	if err := t.UpdateSelected(cmd.Selected); err != nil {
 		return err
 	}
 
@@ -54,24 +55,31 @@ func (s *appService) GetHotTopics(community string, date int64) (HotTopicsDTO, e
 		return HotTopicsDTO{}, err
 	}
 
-	items := make([]hotTopicDTO, len(hts))
-	for i := range hts {
-		item := &hts[i]
-		log := item.GetStatus(date)
+	return toHotTopicsDTO(hts, date), nil
+}
 
-		items[i] = hotTopicDTO{
-			Id:    item.Id,
-			Title: item.Title,
-			Order: log.Order,
-			Status: statusLogDTO{
-				Time:   log.Time,
-				Status: log.Status,
-			},
-			DiscussionSources: item.DiscussionSources,
-		}
+func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err error) {
+	date := utils.GetLastFriday()
+	dateSec := date.Unix()
+
+	review, err := s.repoTopicsToReview.Find(community)
+	if err != nil {
+		return
 	}
 
-	return HotTopicsDTO{Topics: items}, nil
+	hts, err := s.repoHotTopic.FindAll(community, dateSec)
+	if err != nil {
+		return
+	}
+
+	_, news, err := review.FilterChangedAndNews(hts, date)
+	if err != nil {
+		return
+	}
+
+	dto = toHotTopicsDTO(append(hts, news...), dateSec)
+
+	return
 }
 
 func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
@@ -85,7 +93,10 @@ func (s *appService) ApplyToHotTopic(community string, date time.Time) error {
 		return err
 	}
 
-	changed, news := review.FilterChangedAndNews(hts, date)
+	changed, news, err := review.FilterChangedAndNews(hts, date)
+	if err != nil {
+		return err
+	}
 
 	for i := range changed {
 		if err := s.repoHotTopic.Save(community, changed[i]); err != nil {

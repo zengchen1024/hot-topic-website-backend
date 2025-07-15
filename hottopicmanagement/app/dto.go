@@ -201,8 +201,25 @@ func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
 	return nil
 }
 
-type TopicsToPublishDTO struct {
-	Topics []domain.TopicToReview `json:"topics"`
+func toHotTopicsDTO(hts []domain.HotTopic, date int64) HotTopicsDTO {
+	items := make([]hotTopicDTO, len(hts))
+	for i := range hts {
+		item := &hts[i]
+		log := item.GetStatus(date)
+
+		items[i] = hotTopicDTO{
+			Id:    item.Id,
+			Title: item.Title,
+			Order: log.Order,
+			Status: statusLogDTO{
+				Time:   log.Time,
+				Status: log.Status,
+			},
+			DiscussionSources: item.DiscussionSources,
+		}
+	}
+
+	return HotTopicsDTO{Topics: items}
 }
 
 type HotTopicsDTO struct {

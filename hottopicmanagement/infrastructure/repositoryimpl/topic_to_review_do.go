@@ -89,6 +89,7 @@ type topicToReviewDO struct {
 	Title             string                       `bson:"title"    json:"title"`
 	Category          string                       `bson:"category" json:"category"`
 	Resolved          bool                         `bson:"resolved" json:"resolved"`
+	HotTopicId        string                       `bson:"ht_id"    json:"ht_id"`
 	DiscussionSources []discussionSourceToReviewDO `bson:"sources"  json:"sources"`
 }
 
@@ -103,6 +104,7 @@ func (do *topicToReviewDO) toTopicToReview() domain.TopicToReview {
 		Title:             do.Title,
 		Category:          do.Category,
 		Resolved:          do.Resolved,
+		HotTopicId:        do.HotTopicId,
 		DiscussionSources: r,
 	}
 }
@@ -118,6 +120,7 @@ func totopicToReviewDO(v *domain.TopicToReview) topicToReviewDO {
 		Title:             v.Title,
 		Category:          v.Category,
 		Resolved:          v.Resolved,
+		HotTopicId:        v.HotTopicId,
 		DiscussionSources: r,
 	}
 }

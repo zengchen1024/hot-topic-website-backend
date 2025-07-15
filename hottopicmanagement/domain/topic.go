@@ -170,6 +170,7 @@ func (ht *HotTopic) update(r *TopicToReview, date int64, datestr string, aWeekAg
 	}
 
 	ht.TransferLogs = append(ht.TransferLogs, log)
+	ht.Title = r.Title
 
 	return true
 }
@@ -190,6 +191,7 @@ func (ht *HotTopic) InitReview(t *TopicToReview) error {
 	}
 
 	t.Order = ht.Order()
+	t.HotTopicId = ht.Id
 
 	return nil
 }

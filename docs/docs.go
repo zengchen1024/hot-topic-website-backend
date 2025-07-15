@@ -149,7 +149,7 @@ const docTemplate = `{
                         "Internal": []
                     }
                 ],
-                "description": "get topic review info",
+                "description": "get topics to review",
                 "consumes": [
                     "application/json"
                 ],
@@ -212,6 +212,40 @@ const docTemplate = `{
                         "description": "Accepted",
                         "schema": {
                             "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/topic-review/{community}/publish": {
+            "get": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "get topics to publish",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TopicReview"
+                ],
+                "summary": "GetTopicsToPublish",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.HotTopicsDTO"
                         }
                     }
                 }
@@ -390,6 +424,9 @@ const docTemplate = `{
                 "source_type": {
                     "type": "string"
                 },
+                "title": {
+                    "type": "string"
+                },
                 "url": {
                     "type": "string"
                 }
@@ -435,6 +472,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/domain.DiscussionSourceToReview"
                     }
+                },
+                "ht_id": {
+                    "description": "it is not empty if the topic is the last host topic",
+                    "type": "string"
                 },
                 "order": {
                     "type": "integer"

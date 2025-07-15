@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -26,6 +27,8 @@ func (r *DiscussionSourceToReview) toDiscussionSourceInfo() DiscussionSourceInfo
 
 // TopicToReview
 type TopicToReview struct {
+	// it is not empty if the topic is the last host topic
+	HotTopicId        string                     `json:"ht_id"`
 	Order             int                        `json:"order"`
 	Title             string                     `json:"title"`
 	Category          string                     `json:"category"`
@@ -144,7 +147,7 @@ func (t *TopicToReview) getOldDS() map[int]bool {
 	return oldOnes
 }
 
-func (t *TopicToReview) checkIfOldDSMissing(t1 *TopicToReview) error {
+func (t *TopicToReview) checkForReview(t1 *TopicToReview) error {
 	oldOne := t.getOldDS()
 	oldOne1 := t1.getOldDS()
 
@@ -186,20 +189,20 @@ func (t *TopicsToReview) CandidatesNum() int {
 	return n
 }
 
-func (t *TopicsToReview) UpdateSelected(lastHotTopic string, items []TopicToReview) error {
+func (t *TopicsToReview) UpdateSelected(items []TopicToReview) error {
 	lastTopics := map[string]*TopicToReview{}
 	for i := range t.Selected {
-		if item := &t.Selected[i]; item.Category == lastHotTopic {
-			lastTopics[item.Title] = item
+		if item := &t.Selected[i]; item.HotTopicId != "" {
+			lastTopics[item.HotTopicId] = item
 		}
 	}
 
 	n := 0
 	for i := range items {
-		if old, ok := lastTopics[items[i].Title]; ok {
+		if old, ok := lastTopics[items[i].HotTopicId]; ok {
 			n++
 
-			if err := old.checkIfOldDSMissing(&items[i]); err != nil {
+			if err := old.checkForReview(&items[i]); err != nil {
 				return err
 			}
 		}
@@ -255,7 +258,7 @@ func (t *TopicsToReview) GenNotHotTopics() []NotHotTopic {
 }
 
 func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
-	[]*HotTopic, []HotTopic,
+	[]*HotTopic, []HotTopic, error,
 ) {
 	changed := make([]*HotTopic, 0, len(hts))
 	news := make([]HotTopic, 0, len(r.Selected))
@@ -263,7 +266,12 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 	htMap := make(map[string]*HotTopic, len(hts))
 	for i := range hts {
 		item := &hts[i]
-		htMap[item.Title] = item
+		htMap[item.Id] = item
+	}
+
+	htTitleMap := make(map[string]bool, len(hts))
+	for i := range hts {
+		htTitleMap[hts[i].Title] = true
 	}
 
 	dateSec := date.Unix()
@@ -273,17 +281,23 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 	for i := range r.Selected {
 		item := &r.Selected[i]
 
-		ht, ok := htMap[item.Title]
-		if !ok {
-			news = append(news, item.newHotTopic(dateSec, dateStr))
+		if item.HotTopicId != "" {
+			ht, ok := htMap[item.HotTopicId]
+			if !ok {
+				return nil, nil, fmt.Errorf("can't find hot topic, id:%s", item.HotTopicId)
+			}
+
+			if ht.update(item, dateSec, dateStr, aWeekAgo) {
+				changed = append(changed, ht)
+			}
 
 			continue
 		}
 
-		if ht.update(item, dateSec, dateStr, aWeekAgo) {
-			changed = append(changed, ht)
+		if !htTitleMap[item.Title] {
+			news = append(news, item.newHotTopic(dateSec, dateStr))
 		}
 	}
 
-	return changed, news
+	return changed, news, nil
 }

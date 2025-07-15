@@ -21,8 +21,9 @@ func AddInternalRouterForTopicReviewController(
 	}
 
 	r.POST("/v1/hot-topic/:community/to-review", ctl.Create)
-	r.GET("/v1/topic-review/:community", ctl.Get)
+	r.GET("/v1/topic-review/:community", ctl.GetTopicsToReview)
 	r.PUT("/v1/topic-review/:community", ctl.Update)
+	r.GET("/v1/topic-review/:community/publish", ctl.GetToicsToPublish)
 }
 
 type TopicReviewController struct {
@@ -61,15 +62,31 @@ func (ctl *TopicReviewController) Create(ctx *gin.Context) {
 	}
 }
 
+// @Summary      GetTopicsToPublish
+// @Description  get topics to publish
+// @Tags         TopicReview
+// @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
+// @Accept       json
+// @Security     Internal
+// @Success      200    {object}    app.HotTopicsDTO{}
+// @Router       /v1/topic-review/{community}/publish [get]
+func (ctl *TopicReviewController) GetToicsToPublish(ctx *gin.Context) {
+	if v, err := ctl.appService.GetTopicsToPublish(ctx.Param("community")); err != nil {
+		commonctl.SendError(ctx, err)
+	} else {
+		commonctl.SendRespOfGet(ctx, v)
+	}
+}
+
 // @Summary      Get
-// @Description  get topic review info
+// @Description  get topics to review
 // @Tags         TopicReview
 // @Param        community   path    string        true    "lowercase community name, like openubmc, cann"
 // @Accept       json
 // @Security     Internal
 // @Success      200    {object}    app.TopicsToReviewDTO{}
 // @Router       /v1/topic-review/{community} [get]
-func (ctl *TopicReviewController) Get(ctx *gin.Context) {
+func (ctl *TopicReviewController) GetTopicsToReview(ctx *gin.Context) {
 	if v, err := ctl.appService.GetTopicsToReview(ctx.Param("community")); err != nil {
 		commonctl.SendError(ctx, err)
 	} else {

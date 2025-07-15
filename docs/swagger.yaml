@@ -110,6 +110,8 @@ definitions:
         type: string
       source_type:
         type: string
+      title:
+        type: string
       url:
         type: string
     type: object
@@ -140,6 +142,9 @@ definitions:
         items:
           $ref: '#/definitions/domain.DiscussionSourceToReview'
         type: array
+      ht_id:
+        description: it is not empty if the topic is the last host topic
+        type: string
       order:
         type: integer
       resolved:
@@ -234,7 +239,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: get topic review info
+      description: get topics to review
       parameters:
       - description: lowercase community name, like openubmc, cann
         in: path
@@ -275,6 +280,27 @@ paths:
       security:
       - Internal: []
       summary: Update
+      tags:
+      - TopicReview
+  /v1/topic-review/{community}/publish:
+    get:
+      consumes:
+      - application/json
+      description: get topics to publish
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.HotTopicsDTO'
+      security:
+      - Internal: []
+      summary: GetTopicsToPublish
       tags:
       - TopicReview
 securityDefinitions:

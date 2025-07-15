@@ -13,10 +13,11 @@ import (
 
 type AppService interface {
 	NewReviews(string, CmdToUploadOptionalTopics) error
-	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
-	UpdateSelected(string, *CmdToUpdateSelected) error
 	GetHotTopics(community string, since int64) (HotTopicsDTO, error)
+	UpdateSelected(string, *CmdToUpdateSelected) error
 	ApplyToHotTopic(community string, date time.Time) error
+	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
+	GetTopicsToPublish(community string) (dto HotTopicsDTO, err error)
 }
 
 func NewAppService(
