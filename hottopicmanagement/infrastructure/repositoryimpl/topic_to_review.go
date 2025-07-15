@@ -3,6 +3,7 @@ package repositoryimpl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
@@ -37,6 +38,10 @@ func (impl *topicToReview) Find(community string) (domain.TopicsToReview, error)
 	var do topicsToReviewDO
 
 	if err := impl.dao.GetDoc(impl.filter(community), nil, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = repository.NewErrorResourceNotFound(err)
+		}
+
 		return domain.TopicsToReview{}, err
 	}
 
@@ -47,6 +52,10 @@ func (impl *topicToReview) FindSelected(community string) (domain.TopicsToReview
 	var do topicsToReviewDO
 
 	if err := impl.dao.GetDoc(impl.filter(community), bson.M{fieldCandidates: 0}, nil, &do); err != nil {
+		if impl.dao.IsDocNotExists(err) {
+			err = repository.NewErrorResourceNotFound(err)
+		}
+
 		return domain.TopicsToReview{}, err
 	}
 

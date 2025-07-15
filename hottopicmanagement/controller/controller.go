@@ -113,7 +113,7 @@ func (ctl *TopicReviewController) Update(ctx *gin.Context) {
 	}
 
 	if err := req.Validate(); err != nil {
-		commonctl.SendBadRequestBody(ctx, err)
+		commonctl.SendError(ctx, err)
 
 		return
 	}

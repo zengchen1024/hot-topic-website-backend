@@ -1,12 +1,12 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/allerror"
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
 
@@ -151,7 +151,7 @@ func (t *TopicToReview) checkForReview(t1 *TopicToReview) error {
 	oldOne := t.getOldDS()
 	oldOne1 := t1.getOldDS()
 
-	err := errors.New("missing old ds")
+	err := allerror.New(allerror.ErrorCodeMissingDS, "missing old ds", nil)
 
 	if len(oldOne) != len(oldOne1) {
 		return err
@@ -215,7 +215,7 @@ func (t *TopicsToReview) UpdateSelected(items []TopicToReview) error {
 	}
 
 	if n != len(lastTopics) {
-		return errors.New("missing last hot topics")
+		return allerror.New(allerror.ErrorCodeMissingHT, "missing some last hot topics", nil)
 	}
 
 	t.Selected = items

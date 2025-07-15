@@ -1,9 +1,9 @@
 package app
 
 import (
-	"errors"
 	"sort"
 
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/allerror"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
@@ -187,7 +187,10 @@ func (cmd *CmdToUpdateSelected) checkOrder() error {
 
 	for i, num := range nums {
 		if num != i+1 {
-			return errors.New("the topics are not ordered by asc")
+			return allerror.New(
+				allerror.ErrorCodeReviewNotConstantOrder,
+				"the topics are not ordered constantly", nil,
+			)
 		}
 	}
 
@@ -199,7 +202,10 @@ func (cmd *CmdToUpdateSelected) checkDuplicateTopic() error {
 	for i := range cmd.Selected {
 		t := cmd.Selected[i].Title
 		if m[t] {
-			return errors.New("there are duplicate topics")
+			return allerror.New(
+				allerror.ErrorCodeReviewDuplicateTopic,
+				"there are duplicate topics", nil,
+			)
 		}
 		m[t] = true
 	}
@@ -214,7 +220,10 @@ func (cmd *CmdToUpdateSelected) checkDuplicateDS() error {
 		for j := range items {
 			v := items[j].Id
 			if m[v] {
-				return errors.New("there are duplicate discussion sources")
+				return allerror.New(
+					allerror.ErrorCodeReviewDuplicateDS,
+					"there are duplicate discussion sources", nil,
+				)
 			}
 			m[v] = true
 		}

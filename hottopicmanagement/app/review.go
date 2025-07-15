@@ -3,6 +3,8 @@ package app
 import (
 	"fmt"
 
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/allerror"
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/utils"
 )
@@ -31,12 +33,21 @@ func (s *appService) toSelected(
 }
 
 func (s *appService) GetTopicsToReview(community string) (TopicsToReviewDTO, error) {
-	return s.repoTopicsToReview.Find(community)
+	v, err := s.repoTopicsToReview.Find(community)
+	if err != nil && repository.IsErrorResourceNotFound(err) {
+		err = allerror.NewNotFoundError("no review data", err)
+	}
+
+	return v, err
 }
 
 func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) error {
 	t, err := s.repoTopicsToReview.FindSelected(community)
 	if err != nil {
+		if repository.IsErrorResourceNotFound(err) {
+			err = allerror.NewNotFoundError("can't find old reviewed data", err)
+		}
+
 		return err
 	}
 
