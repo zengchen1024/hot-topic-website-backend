@@ -11,4 +11,8 @@ const (
 	ErrorCodeReviewDuplicateDS      = "duplicate_ds"
 	ErrorCodeReviewDuplicateTopic   = "duplicate_topic"
 	ErrorCodeReviewNotConstantOrder = "not_constant_order"
+
+	ErrorCodeInvokeTimeRestricted = "invoke_time_restricted"
+
+	ErrorCodeNoMatchedTopicsToReview = "no_matched_topics_to_review"
 )

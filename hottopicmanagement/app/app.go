@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/opensourceways/hot-topic-website-backend/common/domain/allerror"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/utils"
@@ -49,9 +51,34 @@ func (s *appService) reviewFile(community string) string {
 	return filepath.Join(s.cfg.FilePath, fmt.Sprintf("%s_%s.xlsx", community, utils.Date()))
 }
 
+func (s *appService) checkInvokeByTime(times []time.Weekday) error {
+	if !s.cfg.EnableInvokeRestriction {
+		return nil
+	}
+
+	w := utils.Now().Weekday()
+
+	for _, t := range times {
+		if w == t {
+			return nil
+		}
+	}
+
+	desc := make([]string, len(times))
+	for i, t := range times {
+		desc[i] = t.String()
+	}
+
+	return allerror.New(
+		allerror.ErrorCodeInvokeTimeRestricted,
+		fmt.Sprintf("must invoke on %s", strings.Join(desc, " or ")), nil,
+	)
+
+}
+
 func (s *appService) NewReviews(community string, cmd CmdToUploadOptionalTopics) error {
-	if utils.Now().Weekday() != time.Friday {
-		return errors.New("must invoke on Friday")
+	if err := s.checkInvokeByTime([]time.Weekday{time.Friday}); err != nil {
+		return err
 	}
 
 	cmd.init()

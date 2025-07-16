@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/opensourceways/hot-topic-website-backend/common/domain/allerror"
 	"github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
@@ -32,7 +33,17 @@ func (s *appService) toSelected(
 	return r, nil
 }
 
+func (s *appService) checkInvokeForReview() error {
+	times := []time.Weekday{time.Friday, time.Saturday, time.Sunday}
+
+	return s.checkInvokeByTime(times)
+}
+
 func (s *appService) GetTopicsToReview(community string) (TopicsToReviewDTO, error) {
+	if err := s.checkInvokeForReview(); err != nil {
+		return TopicsToReviewDTO{}, err
+	}
+
 	v, err := s.repoTopicsToReview.Find(community)
 	if err != nil && repository.IsErrorResourceNotFound(err) {
 		err = allerror.NewNotFoundError("no review data", err)
@@ -42,6 +53,10 @@ func (s *appService) GetTopicsToReview(community string) (TopicsToReviewDTO, err
 }
 
 func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) error {
+	if err := s.checkInvokeForReview(); err != nil {
+		return err
+	}
+
 	t, err := s.repoTopicsToReview.FindSelected(community)
 	if err != nil {
 		if repository.IsErrorResourceNotFound(err) {
@@ -76,9 +91,13 @@ func (s *appService) getReviews(community string, dateSec int64) (review domain.
 	}
 
 	if !review.IsMatchedReview(dateSec) {
-		err = fmt.Errorf(
-			"review is not right one which match the time. expect:%d, has:%d",
-			dateSec, review.Date,
+		err = allerror.New(
+			allerror.ErrorCodeNoMatchedTopicsToReview,
+			fmt.Sprintf(
+				"it is not the right review which does not match the time. expect:%d, has:%d",
+				dateSec, review.Date,
+			),
+			nil,
 		)
 	}
 
@@ -86,6 +105,10 @@ func (s *appService) getReviews(community string, dateSec int64) (review domain.
 }
 
 func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err error) {
+	if err := s.checkInvokeForReview(); err != nil {
+		return HotTopicsDTO{}, err
+	}
+
 	date := utils.GetLastFriday()
 	dateSec := date.Unix()
 
@@ -110,6 +133,10 @@ func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err
 }
 
 func (s *appService) ApplyToHotTopic(community string) error {
+	if err := s.checkInvokeByTime([]time.Weekday{time.Monday}); err != nil {
+		return err
+	}
+
 	date := utils.GetLastFriday()
 	dateSec := date.Unix()
 

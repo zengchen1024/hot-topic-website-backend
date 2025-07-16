@@ -6,6 +6,9 @@ mongodb:
 hot_topic_management:
   app:
     filt_path: ""
+    save_to_file: true
+    enable_invoke_restriction: false
+
   repo:
     topic_review: topic_review
     topic_solution: topic_solution

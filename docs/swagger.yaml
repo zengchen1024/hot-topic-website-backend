@@ -208,7 +208,27 @@ paths:
       summary: Add
       tags:
       - HotTopic
-  /v1/hot-topic/{community}/to-review:
+  /v1/topic-review/{community}:
+    get:
+      consumes:
+      - application/json
+      description: get topics to review
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.TopicsToReviewDTO'
+      security:
+      - Internal: []
+      summary: Get
+      tags:
+      - TopicReview
     post:
       consumes:
       - application/json
@@ -233,27 +253,6 @@ paths:
       security:
       - Internal: []
       summary: Create
-      tags:
-      - TopicReview
-  /v1/topic-review/{community}:
-    get:
-      consumes:
-      - application/json
-      description: get topics to review
-      parameters:
-      - description: lowercase community name, like openubmc, cann
-        in: path
-        name: community
-        required: true
-        type: string
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/app.TopicsToReviewDTO'
-      security:
-      - Internal: []
-      summary: Get
       tags:
       - TopicReview
     put:

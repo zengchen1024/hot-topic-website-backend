@@ -99,49 +99,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/hot-topic/{community}/to-review": {
-            "post": {
-                "security": [
-                    {
-                        "Internal": []
-                    }
-                ],
-                "description": "upload topics to review",
-                "consumes": [
-                    "application/json"
-                ],
-                "tags": [
-                    "TopicReview"
-                ],
-                "summary": "Create",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "lowercase community name, like openubmc, cann",
-                        "name": "community",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "body",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/controller.reqToReview"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/controller.ResponseData"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/topic-review/{community}": {
             "get": {
                 "security": [
@@ -210,6 +167,47 @@ const docTemplate = `{
                 "responses": {
                     "202": {
                         "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/controller.ResponseData"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "upload topics to review",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "TopicReview"
+                ],
+                "summary": "Create",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/controller.reqToReview"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/controller.ResponseData"
                         }

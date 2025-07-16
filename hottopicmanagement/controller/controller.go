@@ -20,7 +20,7 @@ func AddInternalRouterForTopicReviewController(
 		appService: s,
 	}
 
-	r.POST("/v1/hot-topic/:community/to-review", ctl.Create)
+	r.POST("/v1/topic-review/:community", ctl.Create)
 	r.GET("/v1/topic-review/:community", ctl.GetTopicsToReview)
 	r.PUT("/v1/topic-review/:community", ctl.Update)
 	r.GET("/v1/topic-review/:community/publish", ctl.GetToicsToPublish)
@@ -38,7 +38,7 @@ type TopicReviewController struct {
 // @Accept       json
 // @Security     Internal
 // @Success      201    {object}    commonctl.ResponseData{}
-// @Router       /v1/hot-topic/{community}/to-review [post]
+// @Router       /v1/topic-review/{community} [post]
 func (ctl *TopicReviewController) Create(ctx *gin.Context) {
 	req := reqToReview{}
 
