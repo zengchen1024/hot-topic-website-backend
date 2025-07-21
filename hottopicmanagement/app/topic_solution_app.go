@@ -93,7 +93,7 @@ func (s *topicSolutionAppService) handleOldTopics(community string, cmd CmdToAdd
 		item := &cmd[i]
 
 		if old, ok := oldTopicsSets[item.Title]; ok {
-			v := parseRelationshipBetweenSets(old.GetDSSet(), item.getDSSet())
+			v := parseRelationshipBetweenSets(item.getDSSet(), old.GetDSSet())
 			if v != setsRelationSame && v != setsRelationLeftIncludesRight {
 				return nil, errors.New("topic includes other discussions")
 			}
