@@ -50,16 +50,21 @@ func (r *TopicToReview) newHotTopic(dateSec int64, date string) HotTopic {
 		logTime = utils.GetDate(&t)
 	}
 
+	status := StatusLog{
+		Time:   logTime,
+		Status: statusNew,
+	}
+	if r.Resolved {
+		status.Status = statusResolved
+	}
+
 	return HotTopic{
 		Title: r.Title,
 		TransferLogs: []TransferLog{
 			TransferLog{
-				Order: r.Order,
-				Date:  dateSec,
-				StatusLog: StatusLog{
-					Time:   logTime,
-					Status: statusNew,
-				},
+				Order:     r.Order,
+				Date:      dateSec,
+				StatusLog: status,
 			},
 		},
 		DiscussionSources: dss,

@@ -120,7 +120,7 @@ func (ht *HotTopic) GetStatus(date int64) TransferLog {
 	return TransferLog{}
 }
 
-func (ht *HotTopic) updatedAt() int64 {
+func (ht *HotTopic) UpdatedAt() int64 {
 	if n := len(ht.TransferLogs); n > 0 {
 		return ht.TransferLogs[n-1].Date
 	}
@@ -137,7 +137,7 @@ func (ht *HotTopic) Order() int {
 }
 
 func (ht *HotTopic) update(r *TopicToReview, date int64, datestr string, aWeekAgo time.Time) bool {
-	updatedAt := ht.updatedAt()
+	updatedAt := ht.UpdatedAt()
 	if updatedAt == 0 {
 		// it is impossible that there aren't old logs
 		return false
