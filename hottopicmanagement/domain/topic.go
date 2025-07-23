@@ -242,11 +242,12 @@ func (ht *HotTopic) GetDiscussionSource(dsId int) *DiscussionSource {
 
 // DiscussionSourceInfo
 type DiscussionSourceInfo struct {
-	Id    int
-	URL   string
-	Title string
+	Id     int    `json:"id"`
+	URL    string `json:"url"`
+	Title  string `json:"title"`
+	Closed bool   `json:"closed"`
 
-	removed bool
+	removed bool `json:"-"`
 }
 
 func (info *DiscussionSourceInfo) Removed() bool {
@@ -256,7 +257,22 @@ func (info *DiscussionSourceInfo) Removed() bool {
 // NotHotTopic
 type NotHotTopic struct {
 	Title             string
+	Category          string
 	DiscussionSources []DiscussionSourceInfo
+}
+
+func (nht *NotHotTopic) IsWorthless(newTopicCategory string) bool {
+	return nht.Category != "" && nht.Category != newTopicCategory && nht.isClosed()
+}
+
+func (nht *NotHotTopic) isClosed() bool {
+	for i := range nht.DiscussionSources {
+		if !nht.DiscussionSources[i].Closed {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (nht *NotHotTopic) GetDSSet() map[int]bool {

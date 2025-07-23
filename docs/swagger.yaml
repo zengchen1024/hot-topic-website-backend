@@ -23,6 +23,13 @@ definitions:
           $ref: '#/definitions/app.hotTopicDTO'
         type: array
     type: object
+  app.NotHotTopicsDTO:
+    properties:
+      topics:
+        items:
+          $ref: '#/definitions/app.notHotTopicDTO'
+        type: array
+    type: object
   app.OptionalTopic:
     properties:
       discussion:
@@ -59,6 +66,15 @@ definitions:
         type: integer
       status:
         $ref: '#/definitions/app.statusLogDTO'
+      title:
+        type: string
+    type: object
+  app.notHotTopicDTO:
+    properties:
+      dss:
+        items:
+          $ref: '#/definitions/domain.DiscussionSourceInfo'
+        type: array
       title:
         type: string
     type: object
@@ -110,6 +126,17 @@ definitions:
         type: string
       source_type:
         type: string
+      title:
+        type: string
+      url:
+        type: string
+    type: object
+  domain.DiscussionSourceInfo:
+    properties:
+      closed:
+        type: boolean
+      id:
+        type: integer
       title:
         type: string
       url:
@@ -208,6 +235,27 @@ paths:
       summary: Add
       tags:
       - HotTopic
+  /v1/not-hot-topic/{community}:
+    get:
+      consumes:
+      - application/json
+      description: get worthless hot topics
+      parameters:
+      - description: lowercase community name, like openubmc, cann
+        in: path
+        name: community
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/app.NotHotTopicsDTO'
+      security:
+      - Internal: []
+      summary: Get
+      tags:
+      - NotHotTopic
   /v1/topic-review/{community}:
     get:
       consumes:

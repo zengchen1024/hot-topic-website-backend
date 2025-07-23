@@ -99,6 +99,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/not-hot-topic/{community}": {
+            "get": {
+                "security": [
+                    {
+                        "Internal": []
+                    }
+                ],
+                "description": "get worthless hot topics",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "NotHotTopic"
+                ],
+                "summary": "Get",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "lowercase community name, like openubmc, cann",
+                        "name": "community",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/app.NotHotTopicsDTO"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/topic-review/{community}": {
             "get": {
                 "security": [
@@ -288,6 +322,17 @@ const docTemplate = `{
                 }
             }
         },
+        "app.NotHotTopicsDTO": {
+            "type": "object",
+            "properties": {
+                "topics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/app.notHotTopicDTO"
+                    }
+                }
+            }
+        },
         "app.OptionalTopic": {
             "type": "object",
             "properties": {
@@ -342,6 +387,20 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/app.statusLogDTO"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "app.notHotTopicDTO": {
+            "type": "object",
+            "properties": {
+                "dss": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.DiscussionSourceInfo"
+                    }
                 },
                 "title": {
                     "type": "string"
@@ -421,6 +480,23 @@ const docTemplate = `{
                 },
                 "source_type": {
                     "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.DiscussionSourceInfo": {
+            "type": "object",
+            "properties": {
+                "closed": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
                 },
                 "title": {
                     "type": "string"

@@ -267,6 +267,30 @@ type hotTopicDTO struct {
 	DiscussionSources []domain.DiscussionSource `json:"dss"`
 }
 
+// toNotHotTopicsDTO
+func toNotHotTopicsDTO(nhts []*domain.NotHotTopic) NotHotTopicsDTO {
+	items := make([]notHotTopicDTO, len(nhts))
+	for i := range nhts {
+		item := nhts[i]
+
+		items[i] = notHotTopicDTO{
+			Title:             item.Title,
+			DiscussionSources: item.DiscussionSources,
+		}
+	}
+
+	return NotHotTopicsDTO{Topics: items}
+}
+
+type NotHotTopicsDTO struct {
+	Topics []notHotTopicDTO `json:"topics"`
+}
+
+type notHotTopicDTO struct {
+	Title             string                        `json:"title"`
+	DiscussionSources []domain.DiscussionSourceInfo `json:"dss"`
+}
+
 type statusLogDTO struct {
 	Time   string `json:"time"`
 	Status string `json:"status"`

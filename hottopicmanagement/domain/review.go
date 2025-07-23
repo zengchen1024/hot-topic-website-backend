@@ -18,9 +18,10 @@ type DiscussionSourceToReview struct {
 
 func (r *DiscussionSourceToReview) toDiscussionSourceInfo() DiscussionSourceInfo {
 	return DiscussionSourceInfo{
-		Id:    r.Id,
-		URL:   r.URL,
-		Title: r.Title,
+		Id:     r.Id,
+		URL:    r.URL,
+		Title:  r.Title,
+		Closed: r.Closed,
 	}
 }
 
@@ -86,6 +87,7 @@ func (r *TopicToReview) newNotHotTopic(selectedDS map[int]bool) (NotHotTopic, bo
 
 	return NotHotTopic{
 		Title:             r.Title,
+		Category:          r.Category,
 		DiscussionSources: v,
 	}, true
 }

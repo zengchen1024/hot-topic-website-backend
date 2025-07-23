@@ -9,6 +9,7 @@ import (
 func tonotNotHotTopicDO(v *domain.NotHotTopic) notNotHotTopicDO {
 	return notNotHotTopicDO{
 		Title:                 v.Title,
+		Category:              v.Category,
 		DiscussionSourceInfos: todiscussionSourceInfoDOs(v.DiscussionSources),
 	}
 }
@@ -26,6 +27,7 @@ func todiscussionSourceInfoDOs(items []domain.DiscussionSourceInfo) []discussion
 // notNotHotTopicDO
 type notNotHotTopicDO struct {
 	Title                 string                   `bson:"title"    json:"title"`
+	Category              string                   `bson:"category" json:"category"`
 	DiscussionSourceInfos []discussionSourceInfoDO `bson:"sources"  json:"sources"`
 }
 
@@ -36,6 +38,7 @@ func (do *notNotHotTopicDO) toDoc() (bson.M, error) {
 func (do *notNotHotTopicDO) toNotHotTopic() domain.NotHotTopic {
 	return domain.NotHotTopic{
 		Title:             do.Title,
+		Category:          do.Category,
 		DiscussionSources: do.toDiscussionSources(),
 	}
 }
@@ -52,23 +55,26 @@ func (do *notNotHotTopicDO) toDiscussionSources() []domain.DiscussionSourceInfo 
 
 // discussionSourceInfoDO
 type discussionSourceInfoDO struct {
-	Id    int    `bson:"id"    json:"id"`
-	URL   string `bson:"url"   json:"url"`
-	Title string `bson:"title" json:"title"`
+	Id     int    `bson:"id"     json:"id"`
+	URL    string `bson:"url"    json:"url"`
+	Title  string `bson:"title"  json:"title"`
+	Closed bool   `bson:"closed" json:"closed"`
 }
 
 func (do *discussionSourceInfoDO) toDiscussionSourceInfo() domain.DiscussionSourceInfo {
 	return domain.DiscussionSourceInfo{
-		Id:    do.Id,
-		URL:   do.URL,
-		Title: do.Title,
+		Id:     do.Id,
+		URL:    do.URL,
+		Title:  do.Title,
+		Closed: do.Closed,
 	}
 }
 
 func todiscussionSourceInfoDO(v *domain.DiscussionSourceInfo) discussionSourceInfoDO {
 	return discussionSourceInfoDO{
-		Id:    v.Id,
-		URL:   v.URL,
-		Title: v.Title,
+		Id:     v.Id,
+		URL:    v.URL,
+		Title:  v.Title,
+		Closed: v.Closed,
 	}
 }

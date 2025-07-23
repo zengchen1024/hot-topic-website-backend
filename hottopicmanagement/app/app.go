@@ -20,6 +20,7 @@ type AppService interface {
 	ApplyToHotTopic(community string) error
 	GetTopicsToReview(community string) (TopicsToReviewDTO, error)
 	GetTopicsToPublish(community string) (dto HotTopicsDTO, err error)
+	GetWorthlessNotHotTopic(community string) (NotHotTopicsDTO, error)
 }
 
 func NewAppService(

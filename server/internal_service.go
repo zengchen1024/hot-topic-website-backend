@@ -17,5 +17,7 @@ func setInternalRouter(prefix string, engine *gin.Engine, cfg *config.Config, se
 	// set routers
 	setInternalRouterForTopicReview(rg, services)
 
-	setInternalRouterForTopicSolution(rg, services)
+	setInternalRouterForHotTopic(rg, services)
+
+	setInternalRouterForNotHotTopic(rg, services)
 }

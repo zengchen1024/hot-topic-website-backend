@@ -163,3 +163,19 @@ func (s *appService) ApplyToHotTopic(community string) error {
 
 	return s.repoNotHotTopic.Save(community, review.GenNotHotTopics())
 }
+
+func (s *appService) GetWorthlessNotHotTopic(community string) (NotHotTopicsDTO, error) {
+	topics, err := s.repoNotHotTopic.FindAll(community)
+	if err != nil {
+		return NotHotTopicsDTO{}, nil
+	}
+
+	items := make([]*domain.NotHotTopic, 0, len(topics))
+	for i := range topics {
+		if item := &topics[i]; item.IsWorthless(sheetNewTopics) {
+			items = append(items, item)
+		}
+	}
+
+	return toNotHotTopicsDTO(items), nil
+}
