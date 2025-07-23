@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -59,6 +58,7 @@ func (r *TopicToReview) newHotTopic(dateSec int64, date string) HotTopic {
 	}
 
 	return HotTopic{
+		Id:    r.HotTopicId,
 		Title: r.Title,
 		TransferLogs: []TransferLog{
 			TransferLog{
@@ -200,22 +200,27 @@ func (t *TopicsToReview) CandidatesNum() int {
 	return n
 }
 
-func (t *TopicsToReview) UpdateSelected(items []TopicToReview) error {
+func (t *TopicsToReview) UpdateSelected(lastHotTopic string, items []TopicToReview, newId func() string) error {
 	lastTopics := map[string]*TopicToReview{}
 	for i := range t.Selected {
-		if item := &t.Selected[i]; item.HotTopicId != "" {
+		if item := &t.Selected[i]; item.Category == lastHotTopic {
 			lastTopics[item.HotTopicId] = item
 		}
 	}
 
 	n := 0
 	for i := range items {
-		if old, ok := lastTopics[items[i].HotTopicId]; ok {
+		item := &items[i]
+
+		if old, ok := lastTopics[item.HotTopicId]; ok {
 			n++
 
-			if err := old.checkForReview(&items[i]); err != nil {
+			if err := old.checkForReview(item); err != nil {
 				return err
 			}
+
+		} else if item.HotTopicId == "" {
+			item.HotTopicId = newId()
 		}
 	}
 
@@ -226,14 +231,6 @@ func (t *TopicsToReview) UpdateSelected(items []TopicToReview) error {
 	t.Selected = items
 
 	return nil
-}
-
-func (t *TopicsToReview) SetSelected(cantegory string, items []TopicToReview) {
-	for i := range items {
-		items[i].Category = cantegory
-	}
-
-	t.Selected = items
 }
 
 func (t *TopicsToReview) AddCandidate(category string, topic *TopicToReview) {
@@ -269,7 +266,7 @@ func (t *TopicsToReview) GenNotHotTopics() []NotHotTopic {
 }
 
 func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
-	[]*HotTopic, []HotTopic, error,
+	[]*HotTopic, []HotTopic,
 ) {
 	changed := make([]*HotTopic, 0, len(hts))
 	news := make([]HotTopic, 0, len(r.Selected))
@@ -280,11 +277,6 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 		htMap[item.Id] = item
 	}
 
-	htTitleMap := make(map[string]bool, len(hts))
-	for i := range hts {
-		htTitleMap[hts[i].Title] = true
-	}
-
 	dateSec := date.Unix()
 	dateStr := utils.GetDate(&date)
 	aWeekAgo := date.AddDate(0, 0, -7)
@@ -292,23 +284,14 @@ func (r *TopicsToReview) FilterChangedAndNews(hts []HotTopic, date time.Time) (
 	for i := range r.Selected {
 		item := &r.Selected[i]
 
-		if item.HotTopicId != "" {
-			ht, ok := htMap[item.HotTopicId]
-			if !ok {
-				return nil, nil, fmt.Errorf("can't find hot topic, id:%s", item.HotTopicId)
-			}
-
+		if ht, ok := htMap[item.HotTopicId]; ok {
 			if ht.update(item, dateSec, dateStr, aWeekAgo) {
 				changed = append(changed, ht)
 			}
-
-			continue
-		}
-
-		if !htTitleMap[item.Title] {
+		} else {
 			news = append(news, item.newHotTopic(dateSec, dateStr))
 		}
 	}
 
-	return changed, news, nil
+	return changed, news
 }

@@ -155,11 +155,10 @@ func (s *appService) handleOldTopics(
 		return nil, err
 	}
 
-	selected, err := s.toSelected(oldTopics, oldOnes)
+	tr.Selected, err = s.toSelected(oldTopics, oldOnes, sheetLastTopics)
 	if err != nil {
 		return nil, err
 	}
-	tr.SetSelected(sheetLastTopics, selected)
 
 	return newOnes, nil
 }
@@ -183,7 +182,7 @@ func (s *appService) handleNewOptionalTopics(
 		}
 
 		for i := range newOnes {
-			v := newOnes[i].toTopicToReview()
+			v := newOnes[i].toTopicToReview("")
 			candidate.AddCandidate(sheetNewTopics, &v)
 		}
 
@@ -205,7 +204,7 @@ func (s *appService) handleNewOptionalTopics(
 	for i, v := range new2old {
 		n := len(v)
 
-		cv := newOnes[i].toTopicToReview()
+		cv := newOnes[i].toTopicToReview("")
 
 		if n == 0 {
 			if err := file.saveNewTopic(newOnes[i]); err != nil {

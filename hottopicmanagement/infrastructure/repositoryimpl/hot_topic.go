@@ -23,7 +23,6 @@ func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	if err != nil {
 		return err
 	}
-	doc[fieldVersion] = 0
 
 	docFilter := bson.M{fieldTitle: v.Title, fieldClosedAt: 0}
 
@@ -52,9 +51,8 @@ func (impl *hotTopic) Save(community string, v *domain.HotTopic) error {
 		return err
 	}
 
-	docFilter, err := dao.DocIdFilter(v.Id)
-	if err != nil {
-		return err
+	docFilter := bson.M{
+		fieldId: v.Id,
 	}
 
 	return dao.UpdateDoc(docFilter, doc, v.Version)
@@ -125,9 +123,8 @@ func (impl *hotTopic) Find(community, topicId string) (topic domain.HotTopic, er
 		return
 	}
 
-	filter, err := dao.DocIdFilter(topicId)
-	if err != nil {
-		return
+	filter := bson.M{
+		fieldId: topicId,
 	}
 
 	var do hotTopicDO

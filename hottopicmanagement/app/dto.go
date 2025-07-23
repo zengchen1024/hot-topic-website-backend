@@ -81,8 +81,9 @@ func (ot *OptionalTopic) getDSSet() map[int]bool {
 	return v
 }
 
-func (ot *OptionalTopic) toTopicToReview() (t domain.TopicToReview) {
+func (ot *OptionalTopic) toTopicToReview(category string) (t domain.TopicToReview) {
 	t.Title = ot.Title
+	t.Category = category
 
 	v := make([]domain.DiscussionSourceToReview, ot.total)
 	items := ot.sort()

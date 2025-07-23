@@ -11,7 +11,7 @@ import (
 )
 
 func (s *appService) toSelected(
-	oldTopics []domain.HotTopic, current map[string]*OptionalTopic,
+	oldTopics []domain.HotTopic, current map[string]*OptionalTopic, category string,
 ) (
 	[]domain.TopicToReview, error,
 ) {
@@ -23,7 +23,7 @@ func (s *appService) toSelected(
 		item := current[old.Title]
 		item.updateAppended(old.GetDSSet())
 
-		r[i] = item.toTopicToReview()
+		r[i] = item.toTopicToReview(category)
 
 		if err := old.InitReview(&r[i]); err != nil {
 			return nil, err
@@ -66,7 +66,7 @@ func (s *appService) UpdateSelected(community string, cmd *CmdToUpdateSelected) 
 		return err
 	}
 
-	if err := t.UpdateSelected(cmd.Selected); err != nil {
+	if err := t.UpdateSelected(sheetLastTopics, cmd.Selected, s.repoTopicsToReview.NewId); err != nil {
 		return err
 	}
 
@@ -122,10 +122,7 @@ func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err
 		return
 	}
 
-	_, news, err := review.FilterChangedAndNews(hts, date)
-	if err != nil {
-		return
-	}
+	_, news := review.FilterChangedAndNews(hts, date)
 
 	dto = toHotTopicsDTO(append(hts, news...), dateSec)
 
@@ -150,10 +147,7 @@ func (s *appService) ApplyToHotTopic(community string) error {
 		return err
 	}
 
-	changed, news, err := review.FilterChangedAndNews(hts, date)
-	if err != nil {
-		return err
-	}
+	changed, news := review.FilterChangedAndNews(hts, date)
 
 	for i := range changed {
 		if err := s.repoHotTopic.Save(community, changed[i]); err != nil {

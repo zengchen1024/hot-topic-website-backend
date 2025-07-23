@@ -2,12 +2,12 @@ package repositoryimpl
 
 import (
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
 const (
+	fieldId        = "id"
 	fieldOrder     = "order"
 	fieldTitle     = "title"
 	fieldVersion   = "version"
@@ -17,6 +17,7 @@ const (
 
 func tohotTopicDO(v *domain.HotTopic) hotTopicDO {
 	return hotTopicDO{
+		Id:                v.Id,
 		Title:             v.Title,
 		DiscussionSources: todiscussionSourceDOs(v.DiscussionSources),
 		TransferLogs:      totransferLogDOs(v.TransferLogs),
@@ -47,13 +48,13 @@ func totransferLogDOs(items []domain.TransferLog) []transferLogDO {
 
 // hotTopicDO
 type hotTopicDO struct {
-	Id                primitive.ObjectID   `bson:"_id"            json:"-"`
+	Id                string               `bson:"id"             json:"id"`
 	Title             string               `bson:"title"          json:"title"`
 	DiscussionSources []discussionSourceDO `bson:"sources"        json:"sources"`
 	TransferLogs      []transferLogDO      `bson:"logs"           json:"logs"`
 	ClosedAt          int64                `bson:"closed_at"      json:"closed_at"`
 	CreatedAt         int64                `bson:"created_at"     json:"created_at"`
-	Version           int                  `bson:"version"        json:"-"`
+	Version           int                  `bson:"version"        json:"version"`
 }
 
 func (do *hotTopicDO) toDoc() (bson.M, error) {
@@ -61,7 +62,7 @@ func (do *hotTopicDO) toDoc() (bson.M, error) {
 }
 
 func (do *hotTopicDO) index() string {
-	return do.Id.Hex()
+	return do.Id
 }
 
 func (do *hotTopicDO) toHotTopic() domain.HotTopic {

@@ -16,6 +16,7 @@ type RepoNotHotTopic interface {
 }
 
 type RepoTopicsToReview interface {
+	NewId() string
 	Add(string, *domain.TopicsToReview) error
 	Find(string) (domain.TopicsToReview, error)
 	SaveSelected(string, *domain.TopicsToReview) error

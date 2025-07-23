@@ -1,6 +1,8 @@
 package repositoryimpl
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
@@ -15,6 +17,13 @@ func NewTopicToReview(dao Dao) *topicToReview {
 
 type topicToReview struct {
 	dao Dao
+}
+
+func (impl *topicToReview) NewId() string {
+	// avoid generate id at same time
+	time.Sleep(time.Microsecond)
+
+	return impl.dao.NewDocId()
 }
 
 func (impl *topicToReview) filter(community string) bson.M {
