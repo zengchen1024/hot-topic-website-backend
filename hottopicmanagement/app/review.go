@@ -130,7 +130,8 @@ func (s *appService) GetTopicsToPublish(community string) (dto HotTopicsDTO, err
 }
 
 func (s *appService) ApplyToHotTopic(community string) error {
-	if err := s.checkInvokeByTime([]time.Weekday{time.Monday}); err != nil {
+	weeks := []time.Weekday{time.Monday, time.Tuesday, time.Wednesday}
+	if err := s.checkInvokeByTime(weeks); err != nil {
 		return err
 	}
 
