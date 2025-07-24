@@ -26,7 +26,7 @@ func (impl *notHotTopic) Save(community string, date int64, items []domain.NotHo
 		return err
 	}
 
-	do := tonotNotHotTopicsDO(date, items)
+	do := tonotHotTopicsDO(date, items)
 
 	doc, err := do.toDoc()
 	if err != nil {
@@ -44,7 +44,7 @@ func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error)
 		return nil, err
 	}
 
-	var do notNotHotTopicsDO
+	var do notHotTopicsDO
 
 	if err := dao.GetDoc(bson.M{}, nil, nil, &do); err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (impl *notHotTopic) FindCreatedAt(community string) (int64, error) {
 		return 0, err
 	}
 
-	var do notNotHotTopicsDO
+	var do notHotTopicsDO
 
 	if err := dao.GetDoc(bson.M{}, bson.M{fieldCreatedAt: 1}, nil, &do); err != nil {
 		if dao.IsDocNotExists(err) {

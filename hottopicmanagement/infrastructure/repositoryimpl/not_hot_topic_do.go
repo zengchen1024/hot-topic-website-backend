@@ -6,28 +6,28 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
-func tonotNotHotTopicsDO(date int64, items []domain.NotHotTopic) notNotHotTopicsDO {
-	topics := make([]notNotHotTopicDO, len(items))
+func tonotHotTopicsDO(date int64, items []domain.NotHotTopic) notHotTopicsDO {
+	topics := make([]notHotTopicDO, len(items))
 	for i := range items {
-		topics[i] = tonotNotHotTopicDO(&items[i])
+		topics[i] = tonotHotTopicDO(&items[i])
 	}
 
-	return notNotHotTopicsDO{
+	return notHotTopicsDO{
 		CreatedAt: date,
 		Topics:    topics,
 	}
 }
 
-type notNotHotTopicsDO struct {
-	Topics    []notNotHotTopicDO `bson:"topics"     json:"topics"`
-	CreatedAt int64              `bson:"created_at" json:"created_at" `
+type notHotTopicsDO struct {
+	Topics    []notHotTopicDO `bson:"topics"     json:"topics"`
+	CreatedAt int64           `bson:"created_at" json:"created_at" `
 }
 
-func (do *notNotHotTopicsDO) toDoc() (bson.M, error) {
+func (do *notHotTopicsDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *notNotHotTopicsDO) toNotHotTopics() []domain.NotHotTopic {
+func (do *notHotTopicsDO) toNotHotTopics() []domain.NotHotTopic {
 	v := make([]domain.NotHotTopic, len(do.Topics))
 	for i := range do.Topics {
 		v[i] = do.Topics[i].toNotHotTopic()
@@ -36,9 +36,9 @@ func (do *notNotHotTopicsDO) toNotHotTopics() []domain.NotHotTopic {
 	return v
 }
 
-// tonotNotHotTopicDO
-func tonotNotHotTopicDO(v *domain.NotHotTopic) notNotHotTopicDO {
-	return notNotHotTopicDO{
+// tonotHotTopicDO
+func tonotHotTopicDO(v *domain.NotHotTopic) notHotTopicDO {
+	return notHotTopicDO{
 		Title:                 v.Title,
 		Category:              v.Category,
 		DiscussionSourceInfos: todiscussionSourceInfoDOs(v.DiscussionSources),
@@ -56,18 +56,18 @@ func todiscussionSourceInfoDOs(items []domain.DiscussionSourceInfo) []discussion
 	return r
 }
 
-// notNotHotTopicDO
-type notNotHotTopicDO struct {
+// notHotTopicDO
+type notHotTopicDO struct {
 	Title                 string                   `bson:"title"    json:"title"`
 	Category              string                   `bson:"category" json:"category"`
 	DiscussionSourceInfos []discussionSourceInfoDO `bson:"sources"  json:"sources"`
 }
 
-func (do *notNotHotTopicDO) toDoc() (bson.M, error) {
+func (do *notHotTopicDO) toDoc() (bson.M, error) {
 	return genDoc(do)
 }
 
-func (do *notNotHotTopicDO) toNotHotTopic() domain.NotHotTopic {
+func (do *notHotTopicDO) toNotHotTopic() domain.NotHotTopic {
 	return domain.NotHotTopic{
 		Title:             do.Title,
 		Category:          do.Category,
@@ -75,7 +75,7 @@ func (do *notNotHotTopicDO) toNotHotTopic() domain.NotHotTopic {
 	}
 }
 
-func (do *notNotHotTopicDO) toDiscussionSources() []domain.DiscussionSourceInfo {
+func (do *notHotTopicDO) toDiscussionSources() []domain.DiscussionSourceInfo {
 	r := make([]domain.DiscussionSourceInfo, len(do.DiscussionSourceInfos))
 
 	for i := range do.DiscussionSourceInfos {
