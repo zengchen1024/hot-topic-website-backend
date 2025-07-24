@@ -161,7 +161,7 @@ func (s *appService) ApplyToHotTopic(community string) error {
 		}
 	}
 
-	return s.repoNotHotTopic.Save(community, review.GenNotHotTopics())
+	return s.repoNotHotTopic.Save(community, dateSec, review.GenNotHotTopics())
 }
 
 func (s *appService) GetWorthlessNotHotTopic(community string) (NotHotTopicsDTO, error) {

@@ -13,6 +13,8 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/app"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/controller"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/infrastructure/repositoryimpl"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watch"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watchhottopic"
 )
 
 func initHotTopicManagement(cfg *config.Config, services *allServices) error {
@@ -21,19 +23,23 @@ func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 	nhm := map[string]repositoryimpl.Dao{}
 
 	items := htCfg.Repo.CommunityCollections
+	communities := make([]string, len(items))
 	for i := range items {
 		item := &items[i]
 		hm[item.Community] = mongodb.DAO(item.Collections.HotTopic)
 		nhm[item.Community] = mongodb.DAO(item.Collections.NotHotTopic)
+
+		communities[i] = item.Community
 	}
 
 	services.repoHotTopic = repositoryimpl.NewHotTopic(hm)
 	services.repoTopicSolution = repositoryimpl.NewTopicSolution(mongodb.DAO(htCfg.Repo.TopicSolution))
+	repoNotHotTopic := repositoryimpl.NewNotHotTopic(nhm)
 
 	services.hottopicmanagementApp = app.NewAppService(
 		&htCfg.App,
 		services.repoHotTopic,
-		repositoryimpl.NewNotHotTopic(nhm),
+		repoNotHotTopic,
 		repositoryimpl.NewTopicToReview(mongodb.DAO(htCfg.Repo.TopicReview)),
 	)
 
@@ -41,7 +47,19 @@ func initHotTopicManagement(cfg *config.Config, services *allServices) error {
 		services.repoTopicSolution, services.repoHotTopic,
 	)
 
+	watch.Start(&cfg.HotTopicManagement.Watch, services.repoHotTopic, services.repoTopicSolution)
+
+	watchhottopic.Start(
+		&cfg.HotTopicManagement.Apply, services.hottopicmanagementApp,
+		repoNotHotTopic, communities,
+	)
+
 	return nil
+}
+
+func exitHotTopicManagement() {
+	watch.Stop()
+	watchhottopic.Stop()
 }
 
 func setInternalRouterForTopicReview(rg *gin.RouterGroup, services *allServices) {

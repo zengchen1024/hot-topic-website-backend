@@ -11,8 +11,9 @@ type RepoHotTopic interface {
 }
 
 type RepoNotHotTopic interface {
-	Save(community string, items []domain.NotHotTopic) error
+	Save(community string, date int64, items []domain.NotHotTopic) error
 	FindAll(string) ([]domain.NotHotTopic, error)
+	FindCreatedAt(community string) (int64, error)
 }
 
 type RepoTopicsToReview interface {

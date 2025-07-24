@@ -26,3 +26,7 @@ func initServices(cfg *config.Config) (services allServices, err error) {
 
 	return
 }
+
+func exitServices() {
+	exitHotTopicManagement()
+}

@@ -6,6 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/app"
+	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain/repository"
 )
 
 var impl *watchingImpl
@@ -13,12 +14,11 @@ var impl *watchingImpl
 func Start(
 	cfg *Config,
 	app app.AppService,
+	repo repository.RepoNotHotTopic,
 	communities []string,
 ) {
 	impl = &watchingImpl{
-		app:         app,
-		communities: communities,
-
+		handler:  newHandler(app, repo, communities),
 		stop:     make(chan struct{}),
 		stopped:  make(chan struct{}),
 		interval: cfg.intervalDuration(),
@@ -26,21 +26,20 @@ func Start(
 
 	impl.start()
 
-	logrus.Info("start to watch resolved issues")
+	logrus.Info("start to watch applying hot topics")
 }
 
 func Stop() {
 	if impl != nil {
 		impl.exit()
 
-		logrus.Info("stop watching resolved issues")
+		logrus.Info("stop watching applying hot topics")
 	}
 }
 
 // watchingImpl
 type watchingImpl struct {
-	app         app.AppService
-	communities []string
+	handler *handler
 
 	stop     chan struct{}
 	stopped  chan struct{}
@@ -78,7 +77,7 @@ func (impl *watchingImpl) watch() {
 	}()
 
 	for {
-		impl.handle(needStop)
+		impl.handler.handle(needStop)
 
 		// time starts.
 		if timer == nil {
@@ -92,18 +91,6 @@ func (impl *watchingImpl) watch() {
 			return
 
 		case <-timer.C:
-		}
-	}
-}
-
-func (impl *watchingImpl) handle(needStop func() bool) {
-	for _, community := range impl.communities {
-		if needStop() {
-			return
-		}
-
-		if err := impl.app.ApplyToHotTopic(community); err != nil {
-			logrus.Errorf("apply hot topics failed, err:%s", err.Error())
 		}
 	}
 }

@@ -6,6 +6,7 @@ Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved
 package allerror
 
 import (
+	"errors"
 	"strings"
 )
 
@@ -23,6 +24,15 @@ func New(code string, msg string, err error) errorImpl {
 	}
 
 	return v
+}
+
+func IsError(err error, code string) bool {
+	v := errorImpl{}
+	if errors.As(err, &v) && v.code == code {
+		return true
+	}
+
+	return false
 }
 
 // errorImpl

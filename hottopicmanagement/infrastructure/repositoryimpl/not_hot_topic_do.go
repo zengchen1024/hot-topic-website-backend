@@ -6,6 +6,37 @@ import (
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
+func tonotNotHotTopicsDO(date int64, items []domain.NotHotTopic) notNotHotTopicsDO {
+	topics := make([]notNotHotTopicDO, len(items))
+	for i := range items {
+		topics[i] = tonotNotHotTopicDO(&items[i])
+	}
+
+	return notNotHotTopicsDO{
+		CreatedAt: date,
+		Topics:    topics,
+	}
+}
+
+type notNotHotTopicsDO struct {
+	Topics    []notNotHotTopicDO `bson:"topics"     json:"topics"`
+	CreatedAt int64              `bson:"created_at" json:"created_at" `
+}
+
+func (do *notNotHotTopicsDO) toDoc() (bson.M, error) {
+	return genDoc(do)
+}
+
+func (do *notNotHotTopicsDO) toNotHotTopics() []domain.NotHotTopic {
+	v := make([]domain.NotHotTopic, len(do.Topics))
+	for i := range do.Topics {
+		v[i] = do.Topics[i].toNotHotTopic()
+	}
+
+	return v
+}
+
+// tonotNotHotTopicDO
 func tonotNotHotTopicDO(v *domain.NotHotTopic) notNotHotTopicDO {
 	return notNotHotTopicDO{
 		Title:                 v.Title,
@@ -14,6 +45,7 @@ func tonotNotHotTopicDO(v *domain.NotHotTopic) notNotHotTopicDO {
 	}
 }
 
+// todiscussionSourceInfoDOs
 func todiscussionSourceInfoDOs(items []domain.DiscussionSourceInfo) []discussionSourceInfoDO {
 	r := make([]discussionSourceInfoDO, len(items))
 

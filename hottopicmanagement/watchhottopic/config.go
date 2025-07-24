@@ -5,7 +5,7 @@ import (
 )
 
 type Config struct {
-	// unit second
+	// unit hour
 	Interval int `json:"interval"`
 }
 

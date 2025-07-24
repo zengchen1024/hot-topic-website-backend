@@ -3,7 +3,6 @@ package repositoryimpl
 import (
 	"go.mongodb.org/mongo-driver/bson"
 
-	commonRepo "github.com/opensourceways/hot-topic-website-backend/common/domain/repository"
 	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/domain"
 )
 
@@ -17,29 +16,7 @@ type notHotTopic struct {
 	daoMap
 }
 
-func (impl *notHotTopic) add(community string, v *domain.NotHotTopic) error {
-	do := tonotNotHotTopicDO(v)
-	doc, err := do.toDoc()
-	if err != nil {
-		return err
-	}
-
-	docFilter := bson.M{fieldTitle: v.Title}
-
-	dao, err := impl.dao(community)
-	if err != nil {
-		return err
-	}
-
-	_, err = dao.InsertDocIfNotExists(docFilter, doc)
-	if err != nil && dao.IsDocExists(err) {
-		err = commonRepo.NewErrorDuplicateCreating(err)
-	}
-
-	return err
-}
-
-func (impl *notHotTopic) Save(community string, items []domain.NotHotTopic) error {
+func (impl *notHotTopic) Save(community string, date int64, items []domain.NotHotTopic) error {
 	dao, err := impl.dao(community)
 	if err != nil {
 		return err
@@ -49,21 +26,16 @@ func (impl *notHotTopic) Save(community string, items []domain.NotHotTopic) erro
 		return err
 	}
 
-	for i := range items {
-		item := &items[i]
+	do := tonotNotHotTopicsDO(date, items)
 
-		do := tonotNotHotTopicDO(item)
-		doc, err := do.toDoc()
-		if err != nil {
-			return err
-		}
-
-		if _, err = dao.InsertDoc(doc); err != nil {
-			return err
-		}
+	doc, err := do.toDoc()
+	if err != nil {
+		return err
 	}
 
-	return nil
+	_, err = dao.InsertDoc(doc)
+
+	return err
 }
 
 func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error) {
@@ -72,16 +44,30 @@ func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error)
 		return nil, err
 	}
 
-	var dos []notNotHotTopicDO
+	var do notNotHotTopicsDO
 
-	if err := dao.GetDocs(nil, nil, nil, &dos); err != nil {
+	if err := dao.GetDoc(bson.M{}, nil, nil, &do); err != nil {
 		return nil, err
 	}
 
-	v := make([]domain.NotHotTopic, len(dos))
-	for i := range dos {
-		v[i] = dos[i].toNotHotTopic()
+	return do.toNotHotTopics(), nil
+}
+
+func (impl *notHotTopic) FindCreatedAt(community string) (int64, error) {
+	dao, err := impl.dao(community)
+	if err != nil {
+		return 0, err
 	}
 
-	return v, nil
+	var do notNotHotTopicsDO
+
+	if err := dao.GetDoc(bson.M{}, bson.M{fieldCreatedAt: 1}, nil, &do); err != nil {
+		if dao.IsDocNotExists(err) {
+			return 0, nil
+		}
+
+		return 0, err
+	}
+
+	return do.CreatedAt, nil
 }

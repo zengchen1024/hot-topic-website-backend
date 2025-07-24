@@ -16,7 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/opensourceways/hot-topic-website-backend/config"
-	"github.com/opensourceways/hot-topic-website-backend/hottopicmanagement/watch"
 )
 
 const (
@@ -55,8 +54,7 @@ func StartWebServer(removeCfg bool, port int, timeout time.Duration, cfg *config
 	// internal service api
 	setInternalRouter("/internal", engine, cfg, &services)
 
-	watch.Start(&cfg.HotTopicManagement.Watch, services.repoHotTopic, services.repoTopicSolution)
-	defer watch.Stop()
+	defer exitServices()
 
 	// start server
 	srv := &http.Server{
