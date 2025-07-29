@@ -78,7 +78,7 @@ func (impl *hotTopic) FindAll(community string, date int64) ([]domain.HotTopic, 
 		}
 	}
 
-	if err := dao.GetDocs(filter, nil, nil, &dos); err != nil {
+	if err := dao.GetDocs(filter, nil, nil, 0, &dos); err != nil {
 		return nil, err
 	}
 
@@ -106,7 +106,7 @@ func (impl *hotTopic) FindOpenOnes(community string) ([]domain.HotTopic, error) 
 
 	var dos []hotTopicDO
 
-	if err := dao.GetDocs(filter, nil, sort, &dos); err != nil {
+	if err := dao.GetDocs(filter, nil, sort, 0, &dos); err != nil {
 		return nil, err
 	}
 

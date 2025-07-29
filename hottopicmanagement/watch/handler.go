@@ -189,7 +189,10 @@ func (h *topicSolutionHandler) handle(
 
 		topic, err := h.repo.Find(solution.Community, ts.TopicId)
 		if err != nil {
-			logrus.Warnf("find the topic(%s) failed, err:%s", ts.TopicId, err.Error())
+			logrus.Warnf(
+				"find the topic(%s) of community(%s) failed, err:%s",
+				ts.TopicId, solution.Community, err.Error(),
+			)
 
 			continue
 		}

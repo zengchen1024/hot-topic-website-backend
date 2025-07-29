@@ -259,7 +259,7 @@ func (impl *daoImpl) GetDoc(filter, project, sort bson.M, result interface{}) er
 	})
 }
 
-func (impl *daoImpl) GetDocs(filter, project, sort bson.M, result interface{}) error {
+func (impl *daoImpl) GetDocs(filter, project, sort bson.M, limit int64, result interface{}) error {
 	return impl.withContext(func(ctx context.Context) error {
 		var cursor *mongo.Cursor
 		var err error
@@ -274,6 +274,12 @@ func (impl *daoImpl) GetDocs(filter, project, sort bson.M, result interface{}) e
 		if len(sort) > 0 {
 			opts = append(opts, &options.FindOptions{
 				Sort: sort,
+			})
+		}
+
+		if limit > 0 {
+			opts = append(opts, &options.FindOptions{
+				Limit: &limit,
 			})
 		}
 

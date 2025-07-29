@@ -43,7 +43,7 @@ type Dao interface {
 	DeleteDocs(filter bson.M) error
 
 	GetDoc(filter, project, sort bson.M, result interface{}) error
-	GetDocs(filter, project, sort bson.M, result interface{}) error
+	GetDocs(filter, project, sort bson.M, limit int64, result interface{}) error
 	GetDocAndDelete(filter, project bson.M, result interface{}) error
 	GetArrayItem(filter bson.M, array string, filterOfArray, project bson.M, result interface{}) error
 }

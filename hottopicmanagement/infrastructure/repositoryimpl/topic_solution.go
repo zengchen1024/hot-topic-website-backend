@@ -35,17 +35,17 @@ func (impl *topicSolution) FindOldest() (repository.TopicSolutions, error) {
 		fieldCreatedAt: 1,
 	}
 
-	var do topicSolutionsDO
+	var dos []topicSolutionsDO
 
-	if err := impl.dao.GetDoc(bson.M{}, nil, sort, &do); err != nil {
-		if impl.dao.IsDocNotExists(err) {
-			err = commonrepo.NewErrorResourceNotFound(err)
-		}
-
+	if err := impl.dao.GetDocs(bson.M{}, nil, sort, 1, &dos); err != nil {
 		return repository.TopicSolutions{}, err
 	}
 
-	return do.toTopicSolutions(), nil
+	if len(dos) == 0 {
+		return repository.TopicSolutions{}, commonrepo.NewErrorResourceNotFound(nil)
+	}
+
+	return dos[0].toTopicSolutions(), nil
 }
 
 func (impl *topicSolution) Remove(tsId string) error {
