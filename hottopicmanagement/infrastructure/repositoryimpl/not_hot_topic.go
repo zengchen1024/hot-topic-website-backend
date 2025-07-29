@@ -47,6 +47,10 @@ func (impl *notHotTopic) FindAll(community string) ([]domain.NotHotTopic, error)
 	var do notHotTopicsDO
 
 	if err := dao.GetDoc(bson.M{}, nil, nil, &do); err != nil {
+		if dao.IsDocNotExists(err) {
+			err = nil
+		}
+
 		return nil, err
 	}
 
