@@ -23,6 +23,7 @@ func (impl *hotTopic) Add(community string, v *domain.HotTopic) error {
 	if err != nil {
 		return err
 	}
+	doc[fieldVersion] = 0
 
 	docFilter := bson.M{fieldTitle: v.Title, fieldClosedAt: 0}
 

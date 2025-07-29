@@ -54,7 +54,7 @@ type hotTopicDO struct {
 	TransferLogs      []transferLogDO      `bson:"logs"           json:"logs"`
 	ClosedAt          int64                `bson:"closed_at"      json:"closed_at"`
 	CreatedAt         int64                `bson:"created_at"     json:"created_at"`
-	Version           int                  `bson:"version"        json:"version"`
+	Version           int                  `bson:"version"        json:"-"`
 }
 
 func (do *hotTopicDO) toDoc() (bson.M, error) {
