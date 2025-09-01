@@ -122,8 +122,6 @@ func (s *appService) handleOldTopics(
 			newOnes[i] = &cmd[i]
 		}
 
-		fmt.Println("no old topics")
-
 		return newOnes, nil
 	}
 
